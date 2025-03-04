@@ -1,0 +1,43 @@
+---
+DOCUMENTATION:
+  name: url_replace
+  short_description: Parse and replace parts of the URL
+  description:
+    - Parse and replace parts of the URL
+    - See also L(Python urllib.parse,https://docs.python.org/3/library/urllib.parse.html)
+  options:
+    _input:
+      description: URL
+      type: string
+      required: true
+    pathadd:
+      description: Add this value to existing path
+      type: string
+    path:
+      description: Replace path
+      type: string
+    port:
+      description: Replace port. Could be integer or identifier for P(fishos.config.port#filter).
+      type: raw
+    scheme:
+      description: Replace scheme
+      type: string
+    query:
+      description: Replace query
+      type: string
+
+EXAMPLES: |
+
+  # http://example.com/foo/bar
+  {{ 'http://example.com/foo'|url_replace('bar') }}
+
+  # wss://example.com/ws
+  {{ 'http://example.com/ws'|url_replace(scheme='wss') }}
+
+  # http://example.com:123/api
+  {{ 'http://example.com/api'|url_replace(port='apiserver.bind') }}
+
+RETURN:
+  _value:
+    description: Modified URL
+    type: string

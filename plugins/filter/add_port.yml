@@ -1,0 +1,28 @@
+---
+DOCUMENTATION:
+  name: add_port
+  short_description: Add port from P(fishos.config.port#filter) to input
+  description:
+    - Filter search for port in C(ports_overrides) and then C(ports) variables.
+  options:
+    _input:
+      description: IP or Hostname or list of them
+      type: raw
+      required: true
+    key:
+      description: Identifier
+      type: string
+      required: true
+
+
+EXAMPLES: |
+
+  # "127.0.0.1:123"
+  {{ '127.0.0.1'|add_port('apiserver.bind') }}
+  # ["127.0.0.1:123", "0.0.0.0:123"]
+  {{ ['127.0.0.1', '0.0.0.0']|add_port('apiserver.bind') }}
+
+RETURN:
+  _value:
+    description: Input with added port name
+    type: raw

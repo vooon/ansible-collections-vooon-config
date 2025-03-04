@@ -1,0 +1,39 @@
+---
+DOCUMENTATION:
+  name: port
+  short_description: Find port for service.name
+  description:
+    - Filter search for port in C(ports_overrides) and then C(ports) variables.
+  notes:
+    - C(ports) dict variable works as a registry for all used ports in the system.
+  options:
+    _input:
+      description: Identifier
+      type: string
+      required: true
+
+EXAMPLES: |
+
+  # 123
+  - debug:
+      msg: "{{ 'apiserver.bind'|port }}"
+    vars:
+      ports:
+        apiserver:
+          bind: 123
+
+  # 321
+  - debug:
+      msg: "{{ 'apiserver.bind'|port }}"
+    vars:
+      ports:
+        apiserver:
+          bind: 123
+      ports_overrides:
+        apiserver:
+          bind: 321
+
+RETURN:
+  _value:
+    description: Port number
+    type: int
