@@ -12,7 +12,7 @@ description:
     potential jinja a user could provide in both the template file and in the override
     dictionary which is ideal for deployers who may have lots of different configs
     using a similar code base.
-  - The module is an extension of the P(ansible.builtin.copy) module and all of attributes that can be
+  - The module is an extension of the P(ansible.builtin.copy#module) module and all of attributes that can be
     set there are available to be set here.
 notes:
   - O(config_type=hjson) converted to JSON on the output.
