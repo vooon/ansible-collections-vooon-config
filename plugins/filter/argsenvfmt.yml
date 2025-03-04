@@ -1,7 +1,8 @@
 ---
 DOCUMENTATION:
   name: argsenvfmt
-  short_description: Format multi-line arguments/options to a single line for using in systemd's EnvironmetFile
+  short_description: Format multi-line args to a single line
+  description: Format multi-line arguments/options to a single line for using in systemd's EnvironmetFile
   options:
     _input:
       description: Arguments

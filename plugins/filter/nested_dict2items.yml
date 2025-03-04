@@ -2,6 +2,7 @@
 DOCUMENTATION:
   name: nested_dict2items
   short_description: Recursively walks trough dict of dicts and returns tuple of as many items as many levels of nesting you have
+  description: Recursively walks trough dict of dicts and returns tuple of as many items as many levels of nesting you have
   options:
     _input:
       description: The dictionary to transform
@@ -14,7 +15,7 @@ DOCUMENTATION:
 
 EXAMPLES: |
 
-  {{ dict()|nested_dict2items }}
+  {{ dict(mon=dict(foo=dict(bar="baz")))|nested_dict2items }}
 
 RETURN:
   _value:

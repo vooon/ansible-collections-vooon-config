@@ -2,6 +2,7 @@
 DOCUMENTATION:
   name: oncalendar
   short_description: Parse systemd OnCalendar spec and return to stream of next invocation dates
+  description: Parse systemd OnCalendar spec and return to stream of next invocation dates
   options:
     _input:
       description: OnCalendar spec

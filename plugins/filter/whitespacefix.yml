@@ -2,6 +2,7 @@
 DOCUMENTATION:
   name: whitespacefix
   short_description: Filter out multiple empty lines
+  description: Filter out multiple empty lines
   options:
     _input:
       description: Text
@@ -13,6 +14,9 @@ EXAMPLES: |
   {% filter whitespacefix %}
   this is a config
 
+  {%   if false %}
+  example
+  {%   endif %}
 
   with many white spaces caused by jinja tags
 

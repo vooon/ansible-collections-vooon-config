@@ -1,7 +1,8 @@
 ---
 DOCUMENTATION:
   name: commentif
-  short_description: Apply comment filter if cond is True
+  short_description: Conditionally apply C(ansible.builtin.comment) filter
+  description: Apply comment filter if cond is True
   options:
     _input:
       description: Text

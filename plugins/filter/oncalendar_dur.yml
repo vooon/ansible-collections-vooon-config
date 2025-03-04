@@ -2,6 +2,7 @@
 DOCUMENTATION:
   name: oncalendar_dur
   short_description: Parse systemd OnCalendar spec and return time deltas between dates in seconds
+  description: Parse systemd OnCalendar spec and return time deltas between dates in seconds
   options:
     _input:
       description: OnCalendar spec
