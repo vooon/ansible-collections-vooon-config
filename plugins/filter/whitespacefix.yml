@@ -1,0 +1,25 @@
+---
+DOCUMENTATION:
+  name: whitespacefix
+  short_description: Filter out multiple empty lines
+  options:
+    _input:
+      description: Text
+      type: string
+      required: true
+
+EXAMPLES: |
+
+  {% filter whitespacefix %}
+  this is a config
+
+
+  with many white spaces caused by jinja tags
+
+
+  {% endfilter %}
+
+RETURN:
+  _value:
+    description: Text
+    type: string

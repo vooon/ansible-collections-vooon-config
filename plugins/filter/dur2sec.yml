@@ -1,0 +1,18 @@
+---
+DOCUMENTATION:
+  name: dur2sec
+  short_description: Parse time duration in Golang format to float seconds
+  options:
+    _input:
+      description: Duration. Accept single string or list of strings.
+      type: raw
+      required: true
+
+EXAMPLES: |
+
+  {{ '2h3m'|dur2sec }}
+
+RETURN:
+  _value:
+    description: Single float or list
+    type: raw

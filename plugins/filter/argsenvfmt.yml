@@ -1,0 +1,22 @@
+---
+DOCUMENTATION:
+  name: argsenvfmt
+  short_description: Format multi-line arguments/options to a single line for using in systemd's EnvironmetFile
+  options:
+    _input:
+      description: Arguments
+      type: string
+      required: true
+
+EXAMPLES: |
+
+  SERVICE_ARGS=
+  {%- filter argsenvfmt %}
+  --flag-one
+  --flag-two
+  {% endfilter %}
+
+RETURN:
+  _value:
+    description: Formatted string
+    type: string

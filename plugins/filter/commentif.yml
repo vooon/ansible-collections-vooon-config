@@ -1,0 +1,28 @@
+---
+DOCUMENTATION:
+  name: commentif
+  short_description: Apply comment filter if cond is True
+  options:
+    _input:
+      description: Text
+      type: string
+      required: true
+    cond:
+      description: Condition
+      type: bool
+      default: true
+    style:
+      description: Comment style to use.
+      type: string
+      default: plain
+
+EXAMPLES: |
+
+  {% filter commentif(false) %}
+  this section is used
+  {% endfilter %}
+
+RETURN:
+  _value:
+    description: Commented text or text
+    type: string

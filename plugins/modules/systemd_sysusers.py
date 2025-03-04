@@ -39,7 +39,7 @@ options:
     default: /etc/sysusers.d
   content:
     description:
-      - tmpfiles content
+      - sysusers content
     type: str
   src:
     description:

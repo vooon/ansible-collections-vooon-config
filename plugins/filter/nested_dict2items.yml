@@ -1,0 +1,22 @@
+---
+DOCUMENTATION:
+  name: nested_dict2items
+  short_description: Recursively walks trough dict of dicts and returns tuple of as many items as many levels of nesting you have
+  options:
+    _input:
+      description: The dictionary to transform
+      type: dict
+      required: true
+    expected_depth:
+      description: Validate actual depth equal to that value.
+      type: int
+      default: -1
+
+EXAMPLES: |
+
+  {{ dict()|nested_dict2items }}
+
+RETURN:
+  _value:
+    description: List of tuples of dicts
+    type: list

@@ -1,0 +1,18 @@
+---
+DOCUMENTATION:
+  name: sec2dur
+  short_description: Convert float seconds into Golang Duration string
+  options:
+    _input:
+      description: Seconds. Accept single float or list of floats.
+      type: raw
+      required: true
+
+EXAMPLES: |
+
+  {{ 600.0|sec2dur }}
+
+RETURN:
+  _value:
+    description: Duration string. Single string or list of strings.
+    type: raw

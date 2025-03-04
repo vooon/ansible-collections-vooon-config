@@ -1,0 +1,31 @@
+---
+DOCUMENTATION:
+  name: oncalendar_dur
+  short_description: Parse systemd OnCalendar spec and return time deltas between dates in seconds
+  options:
+    _input:
+      description: OnCalendar spec
+      type: string
+      required: true
+    start_time:
+      description: Calculation start time. Datetime or string in ISO format.
+      type: raw
+      default: null
+    tz:
+      description: Timezone for calculation.
+      type: raw
+      default: UTC
+    iter_max:
+      description: Limit amount of results.
+      type: int
+      default: 0
+
+EXAMPLES: |
+
+  {{ "*-*-* 04:00:00"|oncalendar_dur|first }}
+
+RETURN:
+  _value:
+    description: Duration in seconds
+    type: list
+    elements: float
