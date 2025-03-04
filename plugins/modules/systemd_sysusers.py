@@ -48,7 +48,7 @@ options:
     description:
       - override file mode
     type: raw
-    default: 0644
+    default: '0644'
 
 author:
   - Vladimir Ermakov <vermakov@sardinasystems.com>

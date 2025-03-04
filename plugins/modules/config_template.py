@@ -12,7 +12,7 @@ description:
     potential jinja a user could provide in both the template file and in the override
     dictionary which is ideal for deployers who may have lots of different configs
     using a similar code base.
-  - The module is an extension of the **copy** module and all of attributes that can be
+  - The module is an extension of the P(ansible.builtin.copy) module and all of attributes that can be
     set there are available to be set here.
 options:
   src:
@@ -30,17 +30,19 @@ options:
     description:
       - "Support two modes of operation: simple dict merge and RFC 6902 JSON Patch."
       - >-
-        **Simple merge**.
+        B(Simple merge).
         A dictionary used to update or override items within a configuration template.
         The dictionary data structure may be nested. If the target config file is an ini
         file the nested keys in the ``config_overrides`` will be used as section
         headers.
       - >-
-        **JSON Patch**. A list of dicts like {"op": "add", "path": "/foo", "value": "bar"}
+        B(JSON Patch). A list of dicts like C({"op": "add", "path": "/foo", "value": "bar"})
     type: json
   config_type:
     description:
       - A string value describing the target config type.
+    notes:
+      - V(hjson) converted to pretty JSON on the output.
     choices:
       - ini
       - json
@@ -66,7 +68,7 @@ options:
     description:
       - Specify the default section for INI configuration files. This is the
         section that will appear at the top of the configuration file. For
-        example 'global'.
+        example C('global').
     default: 'DEFAULT'
   remote_src:
     description:
@@ -97,6 +99,8 @@ options:
   json_sort_keys:
     description:
       - Sort dict keys in JSON result
+    type: bool
+    default: false
   yaml_indent_mapping:
     description:
       - YAML mapping indent

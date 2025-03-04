@@ -55,12 +55,12 @@ options:
     description:
       - directory mode
     type: raw
-    default: 0755
+    default: '0755'
   mode:
     description:
       - override file mode
     type: raw
-    default: 0644
+    default: '0644'
 
 
 author:
