@@ -1,8 +1,0 @@
----
-release_summary: Add filters, documentation
-major_changes:
-  - Ansible 11.3.0
-  - Add port, add_port, url_replace filters
-  - Add documentation to filters
-  - Fix documentation in modules
-  - Setup antsibull-docs

@@ -29,3 +29,15 @@ releases:
     fragments:
     - poetry.yml
     release_date: '2025-02-06'
+  2.3.0:
+    changes:
+      major_changes:
+      - Add documentation to filters
+      - Add port, add_port, url_replace filters
+      - Ansible 11.3.0
+      - Fix documentation in modules
+      - Setup antsibull-docs
+      release_summary: Add filters, documentation
+    fragments:
+    - port.yml
+    release_date: '2025-03-04'

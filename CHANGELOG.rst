@@ -4,6 +4,23 @@ Fishos.Config Release Notes
 
 .. contents:: Topics
 
+v2.3.0
+======
+
+Release Summary
+---------------
+
+Add filters, documentation
+
+Major Changes
+-------------
+
+- Add documentation to filters
+- Add port, add_port, url_replace filters
+- Ansible 11.3.0
+- Fix documentation in modules
+- Setup antsibull-docs
+
 v2.2.0
 ======
 
