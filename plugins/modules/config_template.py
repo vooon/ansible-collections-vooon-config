@@ -14,6 +14,9 @@ description:
     using a similar code base.
   - The module is an extension of the P(ansible.builtin.copy) module and all of attributes that can be
     set there are available to be set here.
+notes:
+  - O(config_type=hjson) converted to JSON on the output.
+  - Has alias C(fishos.config.template).
 options:
   src:
     description:
@@ -41,8 +44,6 @@ options:
   config_type:
     description:
       - A string value describing the target config type.
-    notes:
-      - V(hjson) converted to pretty JSON on the output.
     choices:
       - ini
       - json
