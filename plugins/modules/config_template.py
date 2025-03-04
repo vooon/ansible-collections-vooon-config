@@ -33,7 +33,7 @@ options:
         B(Simple merge).
         A dictionary used to update or override items within a configuration template.
         The dictionary data structure may be nested. If the target config file is an ini
-        file the nested keys in the ``config_overrides`` will be used as section
+        file the nested keys in the O(config_overrides) will be used as section
         headers.
       - >-
         B(JSON Patch). A list of dicts like C({"op": "add", "path": "/foo", "value": "bar"})
@@ -68,7 +68,7 @@ options:
     description:
       - Specify the default section for INI configuration files. This is the
         section that will appear at the top of the configuration file. For
-        example C('global').
+        example V(global).
     default: 'DEFAULT'
   remote_src:
     description:
