@@ -82,3 +82,12 @@ mypy:
       coverage_report:
         coverage_format: cobertura
         path: coverage/cobertura.xml
+
+
+lint-collection-docs:
+  extends: .lint
+  script:
+    - >-
+      poetry run antsibull-docs lint-collection-docs --plugin-docs --skip-rstcheck
+      --validate-collection-refs=all --disallow-unknown-collection-refs
+      .

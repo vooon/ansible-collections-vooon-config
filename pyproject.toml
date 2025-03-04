@@ -64,3 +64,6 @@ antsibull-changelog = "*"
 [tool.poetry.group.docs.dependencies]
 mkdocs = "*"
 mkdocs-ansible = "*"
+antsibull-docs = "*"
+ansible-pygments = "*"
+sphinx-ansible-theme = "*"
