@@ -41,3 +41,11 @@ releases:
     fragments:
     - port.yml
     release_date: '2025-03-04'
+  2.4.0:
+    changes:
+      major_changes:
+      - Add enabled test, which simplifies conditions and list filtering.
+      release_summary: Release is enabled test
+    fragments:
+    - enabled.yml
+    release_date: '2025-03-12'

@@ -4,6 +4,19 @@ Fishos.Config Release Notes
 
 .. contents:: Topics
 
+v2.4.0
+======
+
+Release Summary
+---------------
+
+Release is enabled test
+
+Major Changes
+-------------
+
+- Add enabled test, which simplifies conditions and list filtering.
+
 v2.3.0
 ======
 
