@@ -1,0 +1,26 @@
+---
+DOCUMENTATION:
+  name: enabled
+  short_description: Check when Conditional
+  description:
+    - Check conditional
+    - If argument is not defined, default will be used.
+  options:
+    _input:
+      description: Conditional. Bool or list of bools.
+      type: raw
+      required: true
+    default:
+      description: Default value
+      type: bool
+      default: true
+
+EXAMPLES: |
+
+  - assert:
+      that: item.when is enabled
+
+RETURN:
+  _value:
+    description: Result
+    type: bool
