@@ -28,7 +28,7 @@ options:
     type: str
   unit:
     description:
-      - systemd unit name
+      - Systemd unit name
     required: true
     type: str
   state:
@@ -39,29 +39,32 @@ options:
     default: present
   prefix:
     description:
-      - systemd config dir
+      - Systemd config dir
+      - Defaults to C(/etc/containers/systemd) if O(unit_type=quadlet)
     type: str
     default: /etc/systemd
   unit_type:
     description:
       - Unit type
-    choices: [system, user]
+      - V(system): place override for system unit
+      - V(user): place override for user unit
+      - V(quadlet): place override for podman quadlet unit
+    choices: [system, user, quadlet]
     default: system
   content:
     description:
-      - override content
+      - Override content
     type: str
   directory_mode:
     description:
-      - directory mode
+      - Directory mode
     type: raw
     default: '0755'
   mode:
     description:
-      - override file mode
+      - Override file mode
     type: raw
     default: '0644'
-
 
 author:
   - Vladimir Ermakov <vermakov@sardinasystems.com>
@@ -114,10 +117,10 @@ def run_module():
             choices=["present", "absent"],
             default="present",
         ),
-        prefix=dict(type="str", default="/etc/systemd"),
+        prefix=dict(type="str"),
         unit_type=dict(
             type="str",
-            choices=["system", "user"],
+            choices=["system", "user", "quadlet"],
             default="system",
         ),
         content=dict(type="str"),
@@ -138,12 +141,19 @@ def run_module():
     content = module.params["content"]
     dmode = module.params["directory_mode"]
     fmode = module.params["mode"]
+    prefix = module.params["prefix"]
+    unit_type = module.params["unit_type"]
 
-    dirpath = (
-        Path(module.params["prefix"])
-        / module.params["unit_type"]
-        / (unit.endswith(".d") and unit or (unit + ".d"))
-    )
+    if prefix is None:
+        prefix = "/etc/containers/systemd" if unit_type == "quadlet" else "/etc/systemd"
+
+    if unit_type == "quadlet":
+        dirpath = Path(prefix) / (unit.endswith(".d") and unit or (unit + ".d"))
+    else:
+        dirpath = (
+            Path(prefix) / unit_type / (unit.endswith(".d") and unit or (unit + ".d"))
+        )
+
     filepath = dirpath / (name.endswith(".conf") and name or (name + ".conf"))
 
     changed = False
