@@ -4,6 +4,19 @@ Fishos.Config Release Notes
 
 .. contents:: Topics
 
+v2.5.0
+======
+
+Release Summary
+---------------
+
+Add Quadlet overrides support
+
+Major Changes
+-------------
+
+- `systemd_override` now has `unit_type=quadlet`, which allow placing overrides for Podman systemd units - Quadlets
+
 v2.4.0
 ======
 

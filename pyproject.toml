@@ -31,7 +31,7 @@ requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
 
 [tool.poetry]
-version = "2.4.0"
+version = "2.5.0"
 # currently we do not package collection as python dist
 package-mode = false
 

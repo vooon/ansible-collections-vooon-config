@@ -49,3 +49,12 @@ releases:
     fragments:
     - enabled.yml
     release_date: '2025-03-12'
+  2.5.0:
+    changes:
+      major_changes:
+      - '`systemd_override` now has `unit_type=quadlet`, which allow placing overrides
+        for Podman systemd units - Quadlets'
+      release_summary: Add Quadlet overrides support
+    fragments:
+    - qadlet.yml
+    release_date: '2025-03-20'
