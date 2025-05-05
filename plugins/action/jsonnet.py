@@ -5,7 +5,6 @@
 # https://github.com/luqasn/ansible_jsonnet_template_action
 
 
-
 import os
 import shutil
 import stat
@@ -140,14 +139,18 @@ class ActionModule(ActionBase):
                 )
 
                 if format == "yaml":
-                    yaml =YAML(typ='safe')
-                    yaml.default_flow_style=False
-                    yaml.indent(mapping=2, sequence=4, offset=2,)
+                    yaml = YAML(typ="safe")
+                    yaml.default_flow_style = False
+                    yaml.indent(
+                        mapping=2,
+                        sequence=4,
+                        offset=2,
+                    )
 
                     original_resultant = yaml.load(StringIO(resultant))
-                    out=StringIO()
+                    out = StringIO()
                     yaml.dump(original_resultant, out)
-                    resultant=out.getvalue()
+                    resultant = out.getvalue()
 
             except AnsibleAction:
                 raise
@@ -188,7 +191,7 @@ class ActionModule(ActionBase):
                     ),
                 )
                 copy_action = self._shared_loader_obj.action_loader.get(
-                "ansible.legacy.copy",
+                    "ansible.legacy.copy",
                     task=new_task,
                     connection=self._connection,
                     play_context=self._play_context,
