@@ -30,7 +30,7 @@ dependencies = [
     "durationpy",
     "oncalendar >=1,<2",
     "jsonpatch >=1,<2",
-    "jsonnet",
+    "jsonnet > 0.20.0", # note: 0.20.0 failed to build with Python 3.13
 ]
 
 [project.optional-dependencies]
@@ -60,6 +60,7 @@ docs = [
 
 [tool.uv.sources]
 iniparse = { git = "https://github.com/candlepin/python-iniparse.git" }
+jsonnet = { git = "https://github.com/google/jsonnet.git" }
 
 [[project.authors]]
 name = "Sardina Systems"

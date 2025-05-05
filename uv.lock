@@ -139,6 +139,7 @@ dependencies = [
     { name = "durationpy" },
     { name = "hjson" },
     { name = "iniparse" },
+    { name = "jsonnet" },
     { name = "jsonpatch" },
     { name = "oncalendar" },
     { name = "ruamel-yaml" },
@@ -182,6 +183,7 @@ requires-dist = [
     { name = "durationpy" },
     { name = "hjson", specifier = ">=3,<4" },
     { name = "iniparse", git = "https://github.com/candlepin/python-iniparse.git" },
+    { name = "jsonnet", git = "https://github.com/google/jsonnet.git" },
     { name = "jsonpatch", specifier = ">=1,<2" },
     { name = "lxml", marker = "extra == 'dev'" },
     { name = "mkdocs", marker = "extra == 'docs'" },
@@ -977,6 +979,11 @@ name = "jsmin"
 version = "3.0.1"
 source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/5e/73/e01e4c5e11ad0494f4407a3f623ad4d87714909f50b17a06ed121034ff6e/jsmin-3.0.1.tar.gz", hash = "sha256:c0959a121ef94542e807a674142606f7e90214a2b3d1eb17300244bbb5cc2bfc", size = 13925, upload-time = "2022-01-16T20:35:59.13Z" }
+
+[[package]]
+name = "jsonnet"
+version = "0.21.0rc2"
+source = { git = "https://github.com/google/jsonnet.git#5b507462fe4179bbf7acf1808f9502636eac2306" }
 
 [[package]]
 name = "jsonpatch"
