@@ -1,6 +1,6 @@
 [project]
 name = "ansible-collections-fishos-config"
-dynamic = ["version"]
+version = "2.5.0"
 description = "A collection with modified config_template and other helpers we commonly use."
 license = {text = "Apache-2.0"}
 readme = "README.md"
@@ -10,14 +10,55 @@ classifiers = [
     "Environment :: Console",
     "Environment :: OpenStack",
     "Intended Audience :: Information Technology",
-    "Operating System :: Linux",
-    "Operating System :: Linux :: AlmaLinux",
-    "Operating System :: Linux :: Debian",
+    "Operating System :: POSIX :: Linux",
+    # "Operating System :: POSIX :: Linux :: AlmaLinux",
+    # "Operating System :: POSIX :: Linux :: Debian",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Topic :: System :: Installation/Setup",
+    "Topic :: System :: Systems Administration",
+    "Topic :: Utilities",
 ]
+
+dependencies = [
+    "ruamel.yaml",
+    "tomlkit",
+    "iniparse >= 0.5.1", # we need line_number which is post 0.5
+    "hjson >=3,<4",
+    "durationpy",
+    "oncalendar >=1,<2",
+    "jsonpatch >=1,<2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ansible >=11,<12",
+    "ansible-lint",
+    "antsibull-changelog",
+    "black",
+    "mypy",
+    "pytest",
+    "pytest-cov",
+    "lxml",
+    "yamllint",
+    "types-PyYAML",
+    "ansible-lint-junit",
+    "yamllint-junit",
+]
+docs = [
+    "mkdocs",
+    "mkdocs-ansible",
+    "mkdocstrings-python",
+    "sphinx",
+    "antsibull-docs",
+    "ansible-pygments",
+    "sphinx-ansible-theme",
+]
+
+[tool.uv.sources]
+iniparse = { git = "https://github.com/candlepin/python-iniparse.git" }
 
 [[project.authors]]
 name = "Sardina Systems"
@@ -26,44 +67,9 @@ email = "info@sardinasystems.com"
 [project.urls]
 Homepage = "https://sardinasystems.com"
 
+[tool.hatch.build.targets.wheel.force-include]
+"./" = "ansible_collections/fishos/config"
+
 [build-system]
-requires = ["poetry>=0.12"]
-build-backend = "poetry.masonry.api"
-
-[tool.poetry]
-version = "2.5.0"
-# currently we do not package collection as python dist
-package-mode = false
-
-[tool.poetry.dependencies]
-python = "^3.11"
-"ruamel.yaml" = "*"
-tomlkit = "*"
-# iniparse = ">=0.5.1"  # we need line_number which is post 0.5
-iniparse = { git = "https://github.com/candlepin/python-iniparse.git", rev = "0.5.1" }
-hjson = "^3"
-durationpy = "*"
-oncalendar = "^1"
-jsonpatch = "^1"
-
-[tool.poetry.group.dev.dependencies]
-ansible = "^11"
-# ansible-lint = { git = "https://github.com/ansible-community/ansible-lint.git", markers = "platform_system != 'Windows'" }
-ansible-lint = { version = "*", markers = "platform_system != 'Windows'" }
-mypy = "*"
-lxml = "*"
-pytest = "*"
-pytest-cov = "*"
-yamllint = "*"
-bump2version = "*"
-types-PyYAML = "*"
-ansible-lint-junit = "*"
-yamllint-junit = "*"
-antsibull-changelog = "*"
-
-[tool.poetry.group.docs.dependencies]
-mkdocs = "*"
-mkdocs-ansible = "*"
-antsibull-docs = "*"
-ansible-pygments = "*"
-sphinx-ansible-theme = "*"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
