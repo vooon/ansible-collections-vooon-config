@@ -163,9 +163,9 @@ def test_iniparse_merge_repeated_options():
     assert config["pci"]["alias"] == "foo\nbar\nbaz"
     assert config["pci"]["multiline"] == "\nfoo\nbar\nbaz"
 
-    config["filter_scheduler"][
-        "available_filters"
-    ] = "nova.scheduler.filters.all_filters\nextra.all_filters"
+    config["filter_scheduler"]["available_filters"] = (
+        "nova.scheduler.filters.all_filters\nextra.all_filters"
+    )
     config["pci"]["alias"] = "quux\nzuul"
 
     config.tidy()
