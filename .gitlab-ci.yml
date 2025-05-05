@@ -26,16 +26,15 @@ stages:
 variables:
   CACHE_DIR: $CI_PROJECT_DIR/.cache
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  UV_CACHE_DIR: "$CI_PROJECT_DIR/.cache/uv"
 
 
 .lint:
   stage: lint
   before_script:
     - chmod 755 $CI_PROJECT_DIR
-    - poetry --version
-    - poetry config cache-dir $CACHE_DIR
-    - poetry config virtualenvs.in-project true
-    - poetry install -vv
+    - uv --version
+    - uv sync --frozen --all-extras
   after_script: []
   variables:
     LANG: C
@@ -51,8 +50,8 @@ ansible-lint:
   # allow_failure: true
   script:
     - >-
-      poetry run ansible-lint --show-relpath --parseable --nocolor |
-      poetry run ansible-lint-junit -o ansible-lint.xml
+      uv run ansible-lint --show-relpath --parseable --nocolor |
+      uv run ansible-lint-junit -o ansible-lint.xml
   artifacts:
     when: always
     reports:
@@ -63,7 +62,7 @@ pytest:
   extends: .lint
   # allow_failure: true
   script:
-    - poetry run pytest -v --junitxml=pytest-report.xml ./tests
+    - uv run pytest -v --junitxml=pytest-report.xml ./tests
   artifacts:
     when: always
     reports:
@@ -75,7 +74,7 @@ mypy:
   after_script:
     - "[ -f 'coverage/index.txt' ] && cat coverage/index.txt"
   script:
-    - poetry run mypy --ignore-missing-imports --follow-imports skip --txt-report coverage --cobertura-xml-report coverage -p plugins
+    - uv run mypy --ignore-missing-imports --follow-imports skip --txt-report coverage --cobertura-xml-report coverage -p plugins
   artifacts:
     when: always
     reports:
@@ -88,6 +87,6 @@ lint-collection-docs:
   extends: .lint
   script:
     - >-
-      poetry run antsibull-docs lint-collection-docs --plugin-docs --skip-rstcheck
+      uv run antsibull-docs lint-collection-docs --plugin-docs --skip-rstcheck
       --validate-collection-refs=all --disallow-unknown-collection-refs
       .
