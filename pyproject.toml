@@ -30,6 +30,7 @@ dependencies = [
     "durationpy",
     "oncalendar >=1,<2",
     "jsonpatch >=1,<2",
+    "jsonnet",
 ]
 
 [project.optional-dependencies]
