@@ -46,9 +46,9 @@ options:
   unit_type:
     description:
       - Unit type
-      - V(system): place override for system unit
-      - V(user): place override for user unit
-      - V(quadlet): place override for podman quadlet unit
+      - "V(system): place override for system unit"
+      - "V(user): place override for user unit"
+      - "V(quadlet): place override for podman quadlet unit"
     choices: [system, user, quadlet]
     default: system
   content:

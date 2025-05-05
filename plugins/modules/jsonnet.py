@@ -33,10 +33,10 @@ extends_documentation_fragment:
   - action_common_attributes
   - action_common_attributes.flow
   - action_common_attributes.files
-  - backup
-  - files
-  - template_common
-  - validate
+  # - backup
+  # - files
+  # - template_common
+  # - validate
 
 author:
   - Lucas Romero
