@@ -90,3 +90,20 @@ lint-collection-docs:
       uv run antsibull-docs lint-collection-docs --plugin-docs --skip-rstcheck
       --validate-collection-refs=all --disallow-unknown-collection-refs
       .
+
+
+ruff-check:
+  extends: .lint
+  script:
+    - uv run ruff --version
+    - uv run ruff check --output-format=gitlab > ruff-code-quality-report.json
+  artifacts:
+    reports:
+      codequality: ruff-code-quality-report.json
+
+
+ruff-format:
+  extends: .lint
+  script:
+    - uv run ruff --version
+    - uv run ruff format --diff

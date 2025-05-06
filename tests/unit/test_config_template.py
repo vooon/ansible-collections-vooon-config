@@ -2,16 +2,15 @@
 Test config_template funcs
 """
 
-import io
 import pathlib
 import sys
 
-import pytest
+import pytest  # noqa
 
 actions_path = pathlib.Path(__file__).parent / ".." / ".." / "plugins" / "action"
 sys.path.insert(0, str(actions_path.absolute()))
 
-import config_template
+import config_template  # noqa
 
 INI_REPEATED_OPTS = """\
 [DEFAULT]

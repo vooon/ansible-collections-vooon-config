@@ -6,12 +6,12 @@ import pathlib
 import sys
 
 import pytest
-from ansible.errors import AnsibleFilterError
+from ansible.errors import AnsibleFilterError  # noqa
 
 actions_path = pathlib.Path(__file__).parent / ".." / ".." / "plugins" / "filter"
 sys.path.insert(0, str(actions_path.absolute()))
 
-import nested_dict2items as m
+import nested_dict2items as m  # noqa
 
 
 @pytest.mark.parametrize(

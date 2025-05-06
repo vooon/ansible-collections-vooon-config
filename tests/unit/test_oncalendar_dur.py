@@ -5,13 +5,13 @@ Test oncalendar_dur filter
 import pathlib
 import sys
 
-import pytest
-from ansible.errors import AnsibleFilterError
+import pytest  # noqa
+from ansible.errors import AnsibleFilterError  # noqa
 
 actions_path = pathlib.Path(__file__).parent / ".." / ".." / "plugins" / "filter"
 sys.path.insert(0, str(actions_path.absolute()))
 
-import oncalendar_dur as m
+import oncalendar_dur as m  # noqa
 
 SPEC = "Mon,Thu,Sun *-*-* 01,13:00:00"
 
