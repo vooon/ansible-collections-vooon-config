@@ -10,6 +10,7 @@ import stat
 import tempfile
 from io import StringIO
 
+import json
 from ruamel.yaml import YAML
 import _jsonnet
 from ansible import constants as C
@@ -30,11 +31,11 @@ from ansible.template import generate_ansible_template_vars
 class ActionModule(ActionBase):
     TRANSFERS_FILES = True
 
-    def import_callback(self, dirs, rel):
+    def import_callback(self, dirs, rel) -> (str, bytes):
         for d in dirs:
             try:
                 full_path = self._find_needle(d, rel)
-                with open(full_path) as f:
+                with open(full_path, "rb") as f:
                     return full_path, f.read()
             except AnsibleError:
                 continue
@@ -135,6 +136,11 @@ class ActionModule(ActionBase):
                         [dir, include_dir], rel
                     ),
                 )
+
+                # std.manifestYamlDoc() resultant is a string inside what resulting yaml
+                result_obj = json.loads(resultant)
+                if isinstance(result_obj, str):
+                    resultant = result_obj
 
                 if format == "yaml":
                     yaml = YAML(typ="safe")
