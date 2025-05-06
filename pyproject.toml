@@ -38,7 +38,7 @@ dev = [
     "ansible >=11,<12",
     "ansible-lint",
     "antsibull-changelog",
-    "black",
+    # "black",
     "mypy",
     "pytest",
     "pytest-cov",

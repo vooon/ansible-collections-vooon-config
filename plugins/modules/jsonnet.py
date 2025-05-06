@@ -29,14 +29,14 @@ options:
       - Template include dir
     default: templates
 
-extends_documentation_fragment:
-  - action_common_attributes
-  - action_common_attributes.flow
-  - action_common_attributes.files
-  # - backup
-  # - files
-  # - template_common
-  # - validate
+# extends_documentation_fragment:
+#   - action_common_attributes
+#   - action_common_attributes.flow
+#   - action_common_attributes.files
+#   # - backup
+#   # - files
+#   # - template_common
+#   # - validate
 
 author:
   - Lucas Romero
