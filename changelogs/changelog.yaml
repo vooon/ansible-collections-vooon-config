@@ -58,3 +58,12 @@ releases:
     fragments:
     - qadlet.yml
     release_date: '2025-03-20'
+  2.6.0:
+    changes:
+      major_changes:
+      - Import Jsonnet template from https://github.com/luqasn/ansible_jsonnet_template_action
+      release_summary: Switch to UV
+    fragments:
+    - jsonnet.yml
+    - uv.yml
+    release_date: '2025-05-06'

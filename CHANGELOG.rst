@@ -4,6 +4,19 @@ Fishos.Config Release Notes
 
 .. contents:: Topics
 
+v2.6.0
+======
+
+Release Summary
+---------------
+
+Switch to UV
+
+Major Changes
+-------------
+
+- Import Jsonnet template from https://github.com/luqasn/ansible_jsonnet_template_action
+
 v2.5.0
 ======
 

@@ -1,6 +1,6 @@
 [project]
 name = "ansible-collections-fishos-config"
-version = "2.5.0"
+version = "2.6.0"
 description = "A collection with modified config_template and other helpers we commonly use."
 license = {text = "Apache-2.0"}
 readme = "README.md"

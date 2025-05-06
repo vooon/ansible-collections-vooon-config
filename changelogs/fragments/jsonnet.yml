@@ -1,3 +1,0 @@
----
-major_changes:
-  - Import Jsonnet template from https://github.com/luqasn/ansible_jsonnet_template_action
