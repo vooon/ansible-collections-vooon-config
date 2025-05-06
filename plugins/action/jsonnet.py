@@ -4,34 +4,35 @@
 
 # https://github.com/luqasn/ansible_jsonnet_template_action
 
+import json
 import os
 import shutil
 import stat
 import tempfile
+import typing
 from io import StringIO
 
-import json
-from ruamel.yaml import YAML
 import _jsonnet
 from ansible import constants as C
 from ansible.config.manager import ensure_type
 from ansible.errors import (
-    AnsibleError,
-    AnsibleFileNotFound,
     AnsibleAction,
     AnsibleActionFail,
+    AnsibleError,
+    AnsibleFileNotFound,
 )
-from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
+from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import string_types
 from ansible.plugins.action import ActionBase
 from ansible.template import generate_ansible_template_vars
+from ruamel.yaml import YAML
 
 
 class ActionModule(ActionBase):
     TRANSFERS_FILES = True
 
-    def import_callback(self, dirs, rel) -> (str, bytes):
+    def import_callback(self, dirs, rel) -> typing.Tuple[str, bytes]:
         for d in dirs:
             try:
                 full_path = self._find_needle(d, rel)
@@ -138,7 +139,7 @@ class ActionModule(ActionBase):
                 )
 
                 # std.manifestYamlDoc() resultant is a string inside what resulting yaml
-                result_obj = json.loads(resultant)
+                result_obj: typing.Any = json.loads(resultant)
                 if isinstance(result_obj, str):
                     resultant = result_obj
 
