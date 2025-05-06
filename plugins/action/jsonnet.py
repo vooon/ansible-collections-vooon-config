@@ -4,7 +4,6 @@
 
 # https://github.com/luqasn/ansible_jsonnet_template_action
 
-
 import os
 import shutil
 import stat
@@ -16,25 +15,16 @@ import _jsonnet
 from ansible import constants as C
 from ansible.config.manager import ensure_type
 from ansible.errors import (
-    AnsibleAction,
-    AnsibleActionFail,
     AnsibleError,
     AnsibleFileNotFound,
+    AnsibleAction,
+    AnsibleActionFail,
 )
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import string_types
 from ansible.plugins.action import ActionBase
 from ansible.template import generate_ansible_template_vars
-
-
-# make yaml prettier
-# def str_presenter(dumper, data):
-#     if len(data.splitlines()) > 1:  # check for multiline string
-#         return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="|")
-#     return dumper.represent_scalar("tag:yaml.org,2002:str", data)
-#
-# yaml.add_representer(str, str_presenter)
 
 
 class ActionModule(ActionBase):
@@ -49,7 +39,7 @@ class ActionModule(ActionBase):
             except AnsibleError:
                 continue
 
-        raise AnsibleError("Unable to find '%s' in expected paths." % to_native(needle))
+        raise AnsibleError("Unable to find '%s' in expected paths." % to_native(rel))
 
     def run(self, tmp=None, task_vars=None):
         """handler for template operations"""
@@ -124,9 +114,17 @@ class ActionModule(ActionBase):
                             "Template source files must be utf-8 encoded"
                         )
 
-                # # add ansible 'template' vars
+                # add ansible 'template' vars
                 temp_vars = task_vars.copy()
-                # temp_vars.update(generate_ansible_template_vars(source, dest))
+                # NOTE in the case of ANSIBLE_DEBUG=1 task_vars is VarsWithSources(MutableMapping)
+                # so | operator cannot be used as it can be used only on dicts
+                # https://peps.python.org/pep-0584/#what-about-mapping-and-mutablemapping
+                temp_vars.update(
+                    generate_ansible_template_vars(
+                        self._task.args.get("src", None), source, dest
+                    )
+                )
+
                 string_vars = {key: str(value) for (key, value) in temp_vars.items()}
 
                 resultant = _jsonnet.evaluate_snippet(
@@ -151,7 +149,6 @@ class ActionModule(ActionBase):
                     out = StringIO()
                     yaml.dump(original_resultant, out)
                     resultant = out.getvalue()
-
             except AnsibleAction:
                 raise
             except Exception as e:
@@ -190,6 +187,7 @@ class ActionModule(ActionBase):
                         follow=follow,
                     ),
                 )
+                # call with ansible.legacy prefix to eliminate collisions with collections while still allowing local override
                 copy_action = self._shared_loader_obj.action_loader.get(
                     "ansible.legacy.copy",
                     task=new_task,
