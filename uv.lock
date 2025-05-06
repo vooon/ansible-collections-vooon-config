@@ -133,7 +133,7 @@ wheels = [
 
 [[package]]
 name = "ansible-collections-fishos-config"
-version = "2.5.0"
+version = "2.6.1"
 source = { editable = "." }
 dependencies = [
     { name = "durationpy" },
