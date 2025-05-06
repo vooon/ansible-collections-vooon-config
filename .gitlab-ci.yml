@@ -34,7 +34,7 @@ variables:
   before_script:
     - chmod 755 $CI_PROJECT_DIR
     - uv --version
-    - uv sync --frozen --all-extras
+    - uv sync --frozen --all-groups
   after_script: []
   variables:
     LANG: C

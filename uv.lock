@@ -146,7 +146,7 @@ dependencies = [
     { name = "tomlkit" },
 ]
 
-[package.optional-dependencies]
+[package.dev-dependencies]
 dev = [
     { name = "ansible" },
     { name = "ansible-lint" },
@@ -156,6 +156,7 @@ dev = [
     { name = "mypy" },
     { name = "pytest" },
     { name = "pytest-cov" },
+    { name = "ruff" },
     { name = "types-pyyaml" },
     { name = "yamllint" },
     { name = "yamllint-junit" },
@@ -170,44 +171,42 @@ docs = [
     { name = "sphinx-ansible-theme" },
 ]
 
-[package.dev-dependencies]
-dev = [
-    { name = "ruff" },
-]
-
 [package.metadata]
 requires-dist = [
-    { name = "ansible", marker = "extra == 'dev'", specifier = ">=11,<12" },
-    { name = "ansible-lint", marker = "extra == 'dev'" },
-    { name = "ansible-lint-junit", marker = "extra == 'dev'" },
-    { name = "ansible-pygments", marker = "extra == 'docs'" },
-    { name = "antsibull-changelog", marker = "extra == 'dev'" },
-    { name = "antsibull-docs", marker = "extra == 'docs'" },
     { name = "durationpy" },
     { name = "hjson", specifier = ">=3,<4" },
     { name = "iniparse", git = "https://github.com/candlepin/python-iniparse.git" },
     { name = "jsonnet", git = "https://github.com/google/jsonnet.git" },
     { name = "jsonpatch", specifier = ">=1,<2" },
-    { name = "lxml", marker = "extra == 'dev'" },
-    { name = "mkdocs", marker = "extra == 'docs'" },
-    { name = "mkdocs-ansible", marker = "extra == 'docs'" },
-    { name = "mkdocstrings-python", marker = "extra == 'docs'" },
-    { name = "mypy", marker = "extra == 'dev'" },
     { name = "oncalendar", specifier = ">=1,<2" },
-    { name = "pytest", marker = "extra == 'dev'" },
-    { name = "pytest-cov", marker = "extra == 'dev'" },
     { name = "ruamel-yaml" },
-    { name = "sphinx", marker = "extra == 'docs'" },
-    { name = "sphinx-ansible-theme", marker = "extra == 'docs'" },
     { name = "tomlkit" },
-    { name = "types-pyyaml", marker = "extra == 'dev'" },
-    { name = "yamllint", marker = "extra == 'dev'" },
-    { name = "yamllint-junit", marker = "extra == 'dev'" },
 ]
-provides-extras = ["dev", "docs"]
 
 [package.metadata.requires-dev]
-dev = [{ name = "ruff", specifier = ">=0.11.8" }]
+dev = [
+    { name = "ansible", specifier = ">=11,<12" },
+    { name = "ansible-lint" },
+    { name = "ansible-lint-junit" },
+    { name = "antsibull-changelog" },
+    { name = "lxml" },
+    { name = "mypy" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
+    { name = "types-pyyaml" },
+    { name = "yamllint" },
+    { name = "yamllint-junit" },
+]
+docs = [
+    { name = "ansible-pygments" },
+    { name = "antsibull-docs" },
+    { name = "mkdocs" },
+    { name = "mkdocs-ansible" },
+    { name = "mkdocstrings-python" },
+    { name = "sphinx" },
+    { name = "sphinx-ansible-theme" },
+]
 
 [[package]]
 name = "ansible-compat"

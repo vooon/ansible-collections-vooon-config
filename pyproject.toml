@@ -34,11 +34,14 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+
+[dependency-groups]
 dev = [
     "ansible >=11,<12",
     "ansible-lint",
     "antsibull-changelog",
     # "black",
+    "ruff",
     "mypy",
     "pytest",
     "pytest-cov",
@@ -75,8 +78,3 @@ Homepage = "https://sardinasystems.com"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
-
-[dependency-groups]
-dev = [
-    "ruff>=0.11.8",
-]
