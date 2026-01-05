@@ -1,5 +1,5 @@
 ---
-namespace: fishos
+namespace: vooon
 name: config
 version: 2.6.2
 readme: README.md
@@ -20,4 +20,4 @@ tags:
   - linux
   - tools
 
-repository: "https://github.com/sardinasystems/ansible-collections-fishos-config"
+repository: "https://github.com/vooon/ansible-collections-vooon-config"

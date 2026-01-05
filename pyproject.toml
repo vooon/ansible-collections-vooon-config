@@ -1,5 +1,5 @@
 [project]
-name = "ansible-collections-fishos-config"
+name = "ansible-collections-vooon-config"
 version = "2.6.2"
 description = "A collection with modified config_template and other helpers we commonly use."
 license = {text = "Apache-2.0"}
@@ -11,12 +11,11 @@ classifiers = [
     "Environment :: OpenStack",
     "Intended Audience :: Information Technology",
     "Operating System :: POSIX :: Linux",
-    # "Operating System :: POSIX :: Linux :: AlmaLinux",
-    # "Operating System :: POSIX :: Linux :: Debian",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: System :: Installation/Setup",
     "Topic :: System :: Systems Administration",
     "Topic :: Utilities",
@@ -69,11 +68,15 @@ jsonnet = { git = "https://github.com/google/jsonnet.git" }
 name = "Sardina Systems"
 email = "info@sardinasystems.com"
 
+[[project.authors]]
+name = "Vladimir Ermakov"
+email = "vooon341@gmail.com"
+
 [project.urls]
-Homepage = "https://sardinasystems.com"
+Homepage = "https://github.com/vooon/ansible-collections-vooon-config"
 
 [tool.hatch.build.targets.wheel.force-include]
-"./" = "ansible_collections/fishos/config"
+"./" = "ansible_collections/vooon/config"
 
 [build-system]
 requires = ["hatchling"]
