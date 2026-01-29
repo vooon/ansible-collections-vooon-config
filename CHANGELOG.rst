@@ -4,6 +4,19 @@ Fishos.Config Release Notes
 
 .. contents:: Topics
 
+v3.0.0
+======
+
+Major Changes
+-------------
+
+- Add support for Ansible Core 2.20 (Ansible 13)
+
+Breaking Changes / Porting Guide
+--------------------------------
+
+- Changed namespace. Use aliases or edit your roles.
+
 v2.6.0
 ======
 

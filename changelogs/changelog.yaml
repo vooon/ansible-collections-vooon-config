@@ -67,3 +67,13 @@ releases:
     - jsonnet.yml
     - uv.yml
     release_date: '2025-05-06'
+  3.0.0:
+    changes:
+      breaking_changes:
+      - Changed namespace. Use aliases or edit your roles.
+      major_changes:
+      - Add support for Ansible Core 2.20 (Ansible 13)
+    fragments:
+    - ansible-2.20.yml
+    - renaming.yml
+    release_date: '2026-01-29'
