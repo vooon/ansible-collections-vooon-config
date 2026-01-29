@@ -41,11 +41,17 @@ from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import string_types
 from ansible.plugins.action import ActionBase
-from ansible.template import AnsibleEnvironment, generate_ansible_template_vars
+from ansible.template import generate_ansible_template_vars
 from iniparse import ini
 from iniparse.utils import tidy as ini_tidy
 from jsonpatch import JsonPatch
 from ruamel.yaml import YAML
+
+try:
+    from ansible.template import AnsibleEnvironment
+except ImportError:
+    # for ansible-core > 2.20
+    from jinja2.environment import Environment as AnsibleEnvironment
 
 _DocT = typing.Union[dict, list]
 
