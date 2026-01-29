@@ -16,7 +16,7 @@ description:
     set there are available to be set here.
 notes:
   - O(config_type=hjson) converted to JSON on the output.
-  - Has alias C(fishos.config.template).
+  - Has alias C(vooon.config.template).
 options:
   src:
     description:

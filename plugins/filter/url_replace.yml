@@ -17,7 +17,7 @@ DOCUMENTATION:
       description: Replace path
       type: string
     port:
-      description: Replace port. Could be integer or identifier for P(fishos.config.port#filter).
+      description: Replace port. Could be integer or identifier for P(vooon.config.port#filter).
       type: raw
     scheme:
       description: Replace scheme
