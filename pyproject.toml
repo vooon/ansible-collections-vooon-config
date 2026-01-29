@@ -36,7 +36,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "ansible >=11,<12",
+    "ansible",
     "ansible-lint",
     "antsibull-changelog",
     # "black",
@@ -47,13 +47,13 @@ dev = [
     "lxml",
     "yamllint",
     "types-PyYAML",
-    "ansible-lint-junit",
-    "yamllint-junit",
+    # "ansible-lint-junit",
+    # "yamllint-junit",
 ]
 docs = [
-    "mkdocs",
-    "mkdocs-ansible",
-    "mkdocstrings-python",
+    # "mkdocs",
+    # "mkdocs-ansible",
+    # "mkdocstrings-python",
     "sphinx",
     "antsibull-docs",
     "ansible-pygments",
