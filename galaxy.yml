@@ -21,3 +21,10 @@ tags:
   - tools
 
 repository: "https://github.com/vooon/ansible-collections-vooon-config"
+
+build_ignore:
+  - .venv
+  - .mypy_cache
+  - .pytest_cache
+  - .ruff_cache
+  - .cache
