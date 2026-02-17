@@ -338,7 +338,10 @@ class ActionModule(ActionBase):
         config.merge_repeated_options()
 
         if isinstance(args._patcher, SimpleMerger):
-            assert isinstance(args.config_overrides, dict)
+            if not isinstance(args.config_overrides, dict):
+                raise AnsibleActionFail(
+                    "Simple merge mode requires config_overrides to be a dictionary."
+                )
             for section, items in args.config_overrides.items():
                 # If the items value is not a dictionary it is assumed that the
                 #  value is a default item for this config type.
@@ -404,10 +407,10 @@ class ActionModule(ActionBase):
                 resultant,
                 flags=re.MULTILINE,
             )
-            assert sep_count in [
-                0,
-                1,
-            ], "More than one YAML document separator is not supported!"
+            if sep_count not in [0, 1]:
+                raise AnsibleActionFail(
+                    "More than one YAML document separator is not supported!"
+                )
 
         original_resultant = yaml.load(StringIO(resultant)) or {}
         merged_resultant = self._patch(args, original_resultant)

@@ -81,5 +81,14 @@ jobs:
           set -euxo pipefail
           coll_path="${RUNNER_TEMP}/ansible_collections/vooon/config"
           mkdir -p "$(dirname "${coll_path}")"
-          rsync -a --delete --exclude ".git" "${GITHUB_WORKSPACE}/" "${coll_path}/"
+          rsync -a --delete \
+            --exclude ".git" \
+            --exclude ".venv" \
+            --exclude ".mypy_cache" \
+            --exclude ".pytest_cache" \
+            --exclude ".ruff_cache" \
+            --exclude ".cache" \
+            --exclude "tests/output" \
+            --exclude "dist" \
+            "${GITHUB_WORKSPACE}/" "${coll_path}/"
           uv run bash -lc "cd '${coll_path}' && ansible-test sanity --python 3.13"
