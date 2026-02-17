@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# Copyright: (c) 2024, SardinaSystems Ltd
+# Copyright: (c) 2024, Sardina Systems Ltd.
+# SPDX-License-Identifier: Apache-2.0
 
 DOCUMENTATION = """
 ---
@@ -37,8 +38,11 @@ options:
     type: raw
     default: '0644'
 
+extends_documentation_fragment:
+  - ansible.builtin.files
+
 author:
-  - Vladimir Ermakov <vermakov@sardinasystems.com>
+  - Vladimir Ermakov (@vooon)
 """
 
 EXAMPLES = """

@@ -1,3 +1,6 @@
+# Copyright: (c) 2024, Sardina Systems Ltd.
+# SPDX-License-Identifier: Apache-2.0
+
 """
 Test oncalendar_dur filter
 """
