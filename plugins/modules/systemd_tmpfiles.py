@@ -18,7 +18,7 @@ module: systemd_tmpfiles
 short_description: Manage systemd tmpfiles
 version_added: "2.0.0"
 description:
-  - "This module allows to create, update and remove overrides"
+  - "This module allows creating, updating and removing tmpfiles configs"
 
 options:
   name:
@@ -41,9 +41,6 @@ options:
     description:
       - tmpfiles content
     type: str
-  src:
-    description:
-      - file to copy
   mode:
     description:
       - override file mode
@@ -111,7 +108,8 @@ def run_module():
     content = module.params["content"]
     fmode = module.params["mode"]
 
-    filepath = Path(module.params["config_dir"]) / (
+    dirpath = Path(module.params["config_dir"])
+    filepath = dirpath / (
         name.endswith(".conf") and name or (name + ".conf")
     )
 
@@ -129,24 +127,29 @@ def run_module():
             diff["before"] = fd.read()
 
     if state == "present":
-        if not module.check_mode:
-            # create dirs and also validate file content
-            rc, out, err = module.run_command(
-                ["systemd-tmpfiles", "--create", "-"],
-                data=content,
-                check_rc=True,
-            )
+        # create config dir if needed
+        if not dirpath.exists():
+            changed = True
+            if not module.check_mode:
+                dirpath.mkdir(mode=0o755, parents=True)
 
         # write content to override file
         diff["after_header"] = str(filepath)
         diff["after"] = content
-        if diff["before"] != content:
+        content_changed = (not filepath.exists()) or (diff["before"] != content)
+        if content_changed:
             changed = True
             if not module.check_mode:
                 with filepath.open("wb") as fd:
                     fd.write(content.encode("utf-8"))
+                module.run_command(
+                    ["systemd-tmpfiles", "--create", "-"],
+                    data=content,
+                    check_rc=True,
+                )
 
-        changed = module.set_mode_if_different(filepath, fmode, changed)
+        if filepath.exists():
+            changed = module.set_mode_if_different(filepath, fmode, changed)
 
     elif state == "absent":
         # remove override file

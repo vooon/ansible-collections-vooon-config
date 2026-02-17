@@ -124,7 +124,7 @@ def run_module():
             default="system",
         ),
         content=dict(type="str"),
-        directory_mode=dict(type="raw"),
+        directory_mode=dict(type="raw", default="0755"),
     )
 
     module = AnsibleModule(
@@ -174,20 +174,23 @@ def run_module():
         if not dirpath.exists():
             changed = True
             if not module.check_mode:
-                dirpath.mkdir()
+                dirpath.mkdir(parents=True)
 
-        changed = module.set_mode_if_different(dirpath, dmode, changed)
+        if dirpath.exists():
+            changed = module.set_mode_if_different(dirpath, dmode, changed)
 
         # write content to override file
         diff["after_header"] = str(filepath)
         diff["after"] = content
-        if diff["before"] != content:
+        content_changed = (not filepath.exists()) or (diff["before"] != content)
+        if content_changed:
             changed = True
             if not module.check_mode:
                 with filepath.open("wb") as fd:
                     fd.write(content.encode("utf-8"))
 
-        changed = module.set_mode_if_different(filepath, fmode, changed)
+        if filepath.exists():
+            changed = module.set_mode_if_different(filepath, fmode, changed)
 
     elif state == "absent":
         # remove override file
