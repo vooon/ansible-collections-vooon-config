@@ -1,0 +1,80 @@
+---
+- name: Define test paths
+  ansible.builtin.set_fact:
+    prefix: /tmp/vooon_config_ansible_test_override
+    unit: ansible-test.service
+    name: dropin
+    content: |
+      [Service]
+      LimitNOFILE=65536
+
+- name: Remove prefix to start clean
+  ansible.builtin.file:
+    path: "{{ prefix }}"
+    state: absent
+
+- name: Absent should not create missing path
+  vooon.config.systemd_override:
+    prefix: "{{ prefix }}"
+    unit: "{{ unit }}"
+    name: "{{ name }}"
+    state: absent
+  register: absent_missing
+
+- name: Assert absent run is unchanged
+  ansible.builtin.assert:
+    that:
+      - not absent_missing.changed
+
+- name: Confirm prefix was not created
+  ansible.builtin.stat:
+    path: "{{ prefix }}"
+  register: prefix_stat
+
+- name: Assert prefix is still absent
+  ansible.builtin.assert:
+    that:
+      - not prefix_stat.stat.exists
+
+- name: First present run should create file
+  vooon.config.systemd_override:
+    prefix: "{{ prefix }}"
+    unit: "{{ unit }}"
+    name: "{{ name }}"
+    state: present
+    content: "{{ content }}"
+  register: present_first
+
+- name: Assert first present run changed
+  ansible.builtin.assert:
+    that:
+      - present_first.changed
+
+- name: Second present run should be idempotent
+  vooon.config.systemd_override:
+    prefix: "{{ prefix }}"
+    unit: "{{ unit }}"
+    name: "{{ name }}"
+    state: present
+    content: "{{ content }}"
+  register: present_second
+
+- name: Assert second present run is unchanged
+  ansible.builtin.assert:
+    that:
+      - not present_second.changed
+
+- name: Check mode with same content should stay unchanged
+  vooon.config.systemd_override:
+    prefix: "{{ prefix }}"
+    unit: "{{ unit }}"
+    name: "{{ name }}"
+    state: present
+    content: "{{ content }}"
+  check_mode: true
+  register: present_check_same
+
+- name: Assert check mode no-op is unchanged
+  ansible.builtin.assert:
+    that:
+      - not present_check_same.changed

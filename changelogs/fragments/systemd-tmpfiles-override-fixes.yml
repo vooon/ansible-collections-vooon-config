@@ -1,0 +1,12 @@
+---
+bugfixes:
+  - >-
+    ``systemd_tmpfiles`` now creates ``config_dir`` only for ``state=present``,
+    and applies rules only when content changes in non-check mode.
+  - >-
+    ``systemd_override`` now creates parent directories when needed and avoids
+    mode checks on non-existent paths in check mode.
+minor_changes:
+  - >-
+    Added ``ansible-test`` integration targets for ``systemd_tmpfiles`` and
+    ``systemd_override`` covering idempotency and absent/check-mode behavior.
