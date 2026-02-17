@@ -1,3 +1,3 @@
 # -*- coding: utf-8 -*-
-
-import pytest  # noqa
+# Copyright: (c) 2024, Sardina Systems Ltd.
+# SPDX-License-Identifier: Apache-2.0

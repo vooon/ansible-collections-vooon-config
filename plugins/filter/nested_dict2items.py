@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+# Copyright: (c) 2024, Sardina Systems Ltd.
+# SPDX-License-Identifier: Apache-2.0
+
 import typing
 from collections.abc import Mapping
 
@@ -15,8 +19,7 @@ def nested_dict2items(
             p = parent + (dict(key=k, value=v),)
 
             if isinstance(v, Mapping):
-                for vv in recursive_down(v, p):
-                    yield vv
+                yield from recursive_down(v, p)
 
             else:
                 yield p

@@ -1,0 +1,146 @@
+---
+- name: Define test paths
+  ansible.builtin.set_fact:
+    test_root: /tmp/vooon_config_ansible_test_config_template
+    dest_file: /tmp/vooon_config_ansible_test_config_template/rendered.json
+    remote_src_file: /tmp/vooon_config_ansible_test_config_template/remote-src.json
+    remote_dest_file: /tmp/vooon_config_ansible_test_config_template/remote-rendered.json
+
+- name: Ensure clean test root
+  ansible.builtin.file:
+    path: "{{ test_root }}"
+    state: absent
+
+- name: Ensure test root exists
+  ansible.builtin.file:
+    path: "{{ test_root }}"
+    state: directory
+    mode: "0755"
+
+- name: Render JSON with quoted list_extend false
+  vooon.config.config_template:
+    src: list.json.j2
+    dest: "{{ dest_file }}"
+    config_type: json
+    config_overrides:
+      items:
+        - override
+    list_extend: "false"
+  register: render_first
+
+- name: Assert first render changed
+  ansible.builtin.assert:
+    that:
+      - render_first.changed
+
+- name: Render JSON second time for idempotency
+  vooon.config.config_template:
+    src: list.json.j2
+    dest: "{{ dest_file }}"
+    config_type: json
+    config_overrides:
+      items:
+        - override
+    list_extend: "false"
+  register: render_second
+
+- name: Assert second render is unchanged
+  ansible.builtin.assert:
+    that:
+      - not render_second.changed
+
+- name: Read rendered file
+  ansible.builtin.slurp:
+    src: "{{ dest_file }}"
+  register: rendered_file
+
+- name: Assert quoted list_extend false was coerced and list replaced
+  ansible.builtin.assert:
+    that:
+      - (rendered_file.content | b64decode | from_json)["items"] == ["override"]
+
+- name: Create remote src file for remote_src scenario
+  ansible.builtin.copy:
+    dest: "{{ remote_src_file }}"
+    mode: "0644"
+    content: |
+      {"value": 1}
+
+- name: Render using remote_src
+  vooon.config.config_template:
+    src: "{{ remote_src_file }}"
+    remote_src: true
+    dest: "{{ remote_dest_file }}"
+    config_type: json
+    config_overrides:
+      value: 2
+  register: remote_first
+
+- name: Assert first remote_src render changed
+  ansible.builtin.assert:
+    that:
+      - remote_first.changed
+
+- name: Render using remote_src second time for idempotency
+  vooon.config.config_template:
+    src: "{{ remote_src_file }}"
+    remote_src: true
+    dest: "{{ remote_dest_file }}"
+    config_type: json
+    config_overrides:
+      value: 2
+  register: remote_second
+
+- name: Assert second remote_src render unchanged
+  ansible.builtin.assert:
+    that:
+      - not remote_second.changed
+
+- name: Render JSON using JSON Patch operations
+  vooon.config.config_template:
+    src: list.json.j2
+    dest: "{{ dest_file }}"
+    config_type: json
+    config_overrides:
+      - op: replace
+        path: /x
+        value: 42
+      - op: add
+        path: /patched
+        value: true
+  register: patch_first
+
+- name: Assert JSON Patch render changed
+  ansible.builtin.assert:
+    that:
+      - patch_first.changed
+
+- name: Render JSON with same JSON Patch operations again
+  vooon.config.config_template:
+    src: list.json.j2
+    dest: "{{ dest_file }}"
+    config_type: json
+    config_overrides:
+      - op: replace
+        path: /x
+        value: 42
+      - op: add
+        path: /patched
+        value: true
+  register: patch_second
+
+- name: Assert second JSON Patch render unchanged
+  ansible.builtin.assert:
+    that:
+      - not patch_second.changed
+
+- name: Read patched file
+  ansible.builtin.slurp:
+    src: "{{ dest_file }}"
+  register: patched_file
+
+- name: Assert JSON Patch result content
+  ansible.builtin.assert:
+    that:
+      - (patched_file.content | b64decode | from_json)["x"] == 42
+      - (patched_file.content | b64decode | from_json)["patched"] is true

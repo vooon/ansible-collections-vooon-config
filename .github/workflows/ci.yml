@@ -41,8 +41,20 @@ jobs:
       - name: Mypy
         run: uv run mypy --ignore-missing-imports --follow-imports skip -p plugins
 
-      - name: Unit tests
-        run: uv run pytest -q
+      - name: Unit tests with coverage
+        run: >-
+          uv run pytest -q --cov=plugins
+          --cov-report=term
+          --cov-report=xml:coverage.xml
+          --cov-report=html:htmlcov
+
+      - name: Upload coverage artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-coverage
+          path: |
+            coverage.xml
+            htmlcov/
 
   ansible-sanity:
     runs-on: ubuntu-latest
@@ -69,5 +81,14 @@ jobs:
           set -euxo pipefail
           coll_path="${RUNNER_TEMP}/ansible_collections/vooon/config"
           mkdir -p "$(dirname "${coll_path}")"
-          rsync -a --delete --exclude ".git" "${GITHUB_WORKSPACE}/" "${coll_path}/"
+          rsync -a --delete \
+            --exclude ".git" \
+            --exclude ".venv" \
+            --exclude ".mypy_cache" \
+            --exclude ".pytest_cache" \
+            --exclude ".ruff_cache" \
+            --exclude ".cache" \
+            --exclude "tests/output" \
+            --exclude "dist" \
+            "${GITHUB_WORKSPACE}/" "${coll_path}/"
           uv run bash -lc "cd '${coll_path}' && ansible-test sanity --python 3.13"

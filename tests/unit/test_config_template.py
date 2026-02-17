@@ -1,11 +1,12 @@
+# Copyright: (c) 2024, Sardina Systems Ltd.
+# SPDX-License-Identifier: Apache-2.0
+
 """
 Test config_template funcs
 """
 
 import pathlib
 import sys
-
-import pytest  # noqa
 
 actions_path = pathlib.Path(__file__).parent / ".." / ".." / "plugins" / "action"
 sys.path.insert(0, str(actions_path.absolute()))
@@ -232,3 +233,42 @@ def test_iniparse_ironic_cmdline():
     config.set_option("ilo", "verify_ca", False)
 
     assert config.to_string() == IRONIC_CMDLINE_EDITIED_OPTS
+
+
+def test_task_args_from_args_coerces_bool_int_and_str():
+    args = config_template.TaskArgs.from_args(
+        {
+            "src": 123,
+            "render_template": "false",
+            "list_extend": "yes",
+            "json_indent": "2",
+        }
+    )
+
+    assert args.src == "123"
+    assert args.render_template is False
+    assert args.list_extend is True
+    assert args.json_indent == 2
+
+
+def test_task_args_from_args_uses_defaults_for_missing_fields():
+    args = config_template.TaskArgs.from_args({"src": "foo.j2"})
+
+    assert args.src == "foo.j2"
+    assert args.searchpath == []
+    assert args.render_template is True
+    assert args.json_indent == 4
+
+
+def test_simple_merger_splits_comma_and_newline_strings():
+    base = {}
+    new_items = {
+        "csv_like": "foo,bar",
+        "multiline_text": "foo\nbar",
+    }
+    merger = config_template.SimpleMerger(new_items=new_items, list_extend=False)
+
+    out = merger.apply(base)
+
+    assert out["csv_like"] == ["foo", "bar"]
+    assert out["multiline_text"] == ["foo", "bar"]

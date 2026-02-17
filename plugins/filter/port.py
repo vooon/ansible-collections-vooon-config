@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
+# Copyright: (c) 2024, Sardina Systems Ltd.
+# SPDX-License-Identifier: Apache-2.0
+
 
 from collections.abc import Iterable
 
 from ansible.errors import AnsibleFilterError, AnsibleFilterTypeError
-from ansible.module_utils.six import string_types
 from ansible.utils.display import Display
 from jinja2.exceptions import UndefinedError
 from jinja2.filters import pass_context
@@ -14,7 +16,7 @@ display = Display()
 @pass_context
 def port(context, key):
     """Find port for service.name"""
-    if not isinstance(key, string_types):
+    if not isinstance(key, str):
         raise AnsibleFilterTypeError(f"key should be string, got: {key!r}")
 
     def getport(varname):
@@ -55,13 +57,13 @@ def port(context, key):
 
 @pass_context
 def add_port(context, ip_or_hosts, key):
-    if not isinstance(ip_or_hosts, (string_types, Iterable)):
+    if not isinstance(ip_or_hosts, (str, Iterable)):
         raise AnsibleFilterTypeError(
             f"ip_or_hosts should be string or list, got: {ip_or_hosts!r}"
         )
 
     p = port(context, key)
-    if isinstance(ip_or_hosts, string_types):
+    if isinstance(ip_or_hosts, str):
         return f"{ip_or_hosts}:{p}"
 
     return (f"{host}:{p}" for host in ip_or_hosts)

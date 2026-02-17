@@ -1,16 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# Copyright: (c) 2024, SardinaSystems Ltd
-
-from __future__ import absolute_import, division, print_function
-
-__metaclass__ = type
-
-ANSIBLE_METADATA = {
-    "metadata_version": "1.1",
-    "status": ["preview"],
-    "supported_by": "certified",
-}
+# Copyright: (c) 2024, Sardina Systems Ltd.
+# SPDX-License-Identifier: Apache-2.0
 
 DOCUMENTATION = """
 ---
@@ -41,17 +32,17 @@ options:
     description:
       - sysusers content
     type: str
-  src:
-    description:
-      - file to copy
   mode:
     description:
       - override file mode
     type: raw
     default: '0644'
 
+extends_documentation_fragment:
+  - ansible.builtin.files
+
 author:
-  - Vladimir Ermakov <vermakov@sardinasystems.com>
+  - Vladimir Ermakov (@vooon)
 """
 
 EXAMPLES = """
@@ -71,13 +62,9 @@ EXAMPLES = """
 RETURN = """
 """
 
-from ansible.module_utils.basic import AnsibleModule  # noqa: E402 isort:skip
-from ansible.module_utils.six import PY3  # noqa: E402 isort:skip
+from pathlib import Path  # noqa: E402 isort:skip
 
-if PY3:
-    from pathlib import Path
-else:
-    from pathlib2 import Path
+from ansible.module_utils.basic import AnsibleModule  # noqa: E402 isort:skip
 
 
 def run_module():
@@ -150,6 +137,11 @@ def run_module():
             if not module.check_mode:
                 with filepath.open("wb") as fd:
                     fd.write(content.encode("utf-8"))
+                module.run_command(
+                    ["systemd-sysusers", "-"],
+                    data=content,
+                    check_rc=True,
+                )
 
         if filepath.exists():
             changed = module.set_mode_if_different(filepath, fmode, changed)

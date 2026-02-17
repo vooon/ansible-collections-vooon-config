@@ -32,176 +32,202 @@ import tempfile
 import typing
 from io import StringIO
 
-import hjson
-import tomlkit
 from ansible import constants as C
 from ansible.config.manager import ensure_type
 from ansible.errors import AnsibleAction, AnsibleActionFail, AnsibleError
-from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.parsing.convert_bool import boolean
-from ansible.module_utils.six import string_types
 from ansible.plugins.action import ActionBase
 from ansible.template import generate_ansible_template_vars
-from iniparse import ini
-from iniparse.utils import tidy as ini_tidy
-from jsonpatch import JsonPatch
-from ruamel.yaml import YAML
 
 try:
-    from ansible.template import AnsibleEnvironment
+    from jsonpatch import JsonPatch
 except ImportError:
-    # for ansible-core > 2.20
-    from jinja2.environment import Environment as AnsibleEnvironment
+    JsonPatch = None  # type: ignore[assignment,misc]
+try:
+    from iniparse import ini
+    from iniparse.utils import tidy as ini_tidy
+except ImportError:
+    ini = None  # type: ignore[assignment]
+    ini_tidy = None  # type: ignore[assignment]
+try:
+    import hjson
+except ImportError:
+    hjson = None  # type: ignore[assignment]
+try:
+    import tomlkit
+except ImportError:
+    tomlkit = None  # type: ignore[assignment]
+try:
+    from ruamel.yaml import YAML
+except ImportError:
+    YAML = None  # type: ignore[assignment,misc]
+
+try:
+    from ansible.module_utils.common.text.converters import to_bytes, to_text
+except ImportError:
+    # Compatibility with older ansible-core.
+    from ansible.module_utils._text import to_bytes, to_text
 
 _DocT = typing.Union[dict, list]
 
 
-class OptionLine(ini.OptionLine):
-    indent = ""
+if ini is not None:
 
-    regex = re.compile(
-        r"^(?P<indent>[\s]*)"
-        r"(?P<name>[^:=\s[][^:=]*)"
-        r"(?P<sep>[:=]\s*)"
-        r"(?P<value>.*)$"
-    )
+    class OptionLine(ini.OptionLine):
+        indent = ""
 
-    indent_regex = re.compile(r"^(?P<indent>[\s]*)")
+        regex = re.compile(
+            r"^(?P<indent>[\s]*)"
+            r"(?P<name>[^:=\s[][^:=]*)"
+            r"(?P<sep>[:=]\s*)"
+            r"(?P<value>.*)$"
+        )
 
-    def to_string(self) -> str:
-        return self.indent + super().to_string()
+        indent_regex = re.compile(r"^(?P<indent>[\s]*)")
 
-    @classmethod
-    def parse(cls, line: str) -> typing.Optional["OptionLine"]:
-        instance = super().parse(line)
-        if instance is not None:
-            m = cls.indent_regex.match(line)
-            if m:
-                instance.indent = m.group("indent")
+        def to_string(self) -> str:
+            return self.indent + super().to_string()
 
-        return instance
+        @classmethod
+        def parse(cls, line: str) -> typing.Optional["OptionLine"]:
+            instance = super().parse(line)
+            if instance is not None:
+                m = cls.indent_regex.match(line)
+                if m:
+                    instance.indent = m.group("indent")
 
+            return instance
 
-class INIConfig(ini.INIConfig):
-    _line_types = [
-        ini.EmptyLine,
-        ini.CommentLine,
-        ini.SectionLine,
-        OptionLine,
-        ini.ContinuationLine,
-    ]
-    _injected_default_section: bool = False
+    class INIConfig(ini.INIConfig):
+        _line_types = [
+            ini.EmptyLine,
+            ini.CommentLine,
+            ini.SectionLine,
+            OptionLine,
+            ini.ContinuationLine,
+        ]
+        _injected_default_section: bool = False
 
-    @classmethod
-    def from_string(
-        cls, resultant: str, source: str = "<???>", **kwargs
-    ) -> "INIConfig":
-        if resultant.endswith("\n"):
-            resultant = resultant[0:-1]
+        @classmethod
+        def from_string(
+            cls, resultant: str, source: str = "<???>", **kwargs
+        ) -> "INIConfig":
+            if resultant.endswith("\n"):
+                resultant = resultant[0:-1]
 
-        ini.DEFAULTSECT = "@@disable_default_section_special_handling"
-        ini.change_comment_syntax(";#", allow_rem=False)
+            ini.DEFAULTSECT = "@@disable_default_section_special_handling"
+            ini.change_comment_syntax(";#", allow_rem=False)
 
-        buf = StringIO(resultant)
-        buf.name = source
+            buf = StringIO(resultant)
+            buf.name = source
 
-        try:
-            instance = cls(buf, optionxformvalue=str, **kwargs)
-        except ini.MissingSectionHeaderError:
-            # Fallback for .env like files used by systemd
-            buf.seek(0)
-            buf.write("[DEFAULT]\n")
-            buf.write(resultant)
-            buf.seek(0)
+            try:
+                instance = cls(buf, optionxformvalue=str, **kwargs)
+            except ini.MissingSectionHeaderError:
+                # Fallback for .env like files used by systemd
+                buf.seek(0)
+                buf.write("[DEFAULT]\n")
+                buf.write(resultant)
+                buf.seek(0)
 
-            instance = cls(buf, optionxformvalue=str, **kwargs)
-            instance._injected_default_section = True
+                instance = cls(buf, optionxformvalue=str, **kwargs)
+                instance._injected_default_section = True
 
-        return instance
+            return instance
 
-    def to_string(self) -> str:
-        resultant = str(self)
-        if self._injected_default_section:
-            resultant = "\n".join(resultant.splitlines()[1:])
+        def to_string(self) -> str:
+            resultant = str(self)
+            if self._injected_default_section:
+                resultant = "\n".join(resultant.splitlines()[1:])
 
-        if not resultant.endswith("\n"):
-            resultant += "\n"
+            if not resultant.endswith("\n"):
+                resultant += "\n"
 
-        return resultant
+            return resultant
 
-    def merge_repeated_options(self) -> None:
-        for section_name in list(self):
-            section = self[section_name]
-            for container in section._lines:
-                if not isinstance(container, ini.LineContainer):
-                    continue
-
-                to_drop: typing.List[int] = []
-                for idx, line in enumerate(container.contents):
-                    if not isinstance(line, ini.LineContainer):
+        def merge_repeated_options(self) -> None:
+            for section_name in list(self):
+                section = self[section_name]
+                for container in section._lines:
+                    if not isinstance(container, ini.LineContainer):
                         continue
 
-                    opt = section._options[line.get_name()]
-                    if line is not opt:
-                        to_drop.append(idx)
-                        opt.extend(line.contents)
-                        opt.contents.sort(key=lambda x: x.line_number)
+                    to_drop: typing.List[int] = []
+                    for idx, line in enumerate(container.contents):
+                        if not isinstance(line, ini.LineContainer):
+                            continue
 
-                for idx in sorted(to_drop, reverse=True):
-                    del container.contents[idx]
+                        opt = section._options[line.get_name()]
+                        if line is not opt:
+                            to_drop.append(idx)
+                            opt.extend(line.contents)
+                            opt.contents.sort(key=lambda x: x.line_number)
 
-    def tidy(self):
-        ini_tidy(self)
+                    for idx in sorted(to_drop, reverse=True):
+                        del container.contents[idx]
 
-    def as_dict(self) -> typing.Dict[str, dict]:
-        def yield_section(
-            sect,
-        ) -> typing.Generator[typing.Tuple[str, dict], None, None]:
-            for name in sect:
-                v = sect[name]
-                if isinstance(v, string_types) and "\n" in v:
-                    yield name, v.splitlines()
-                    continue
-                yield name, v
+        def tidy(self):
+            ini_tidy(self)
 
-        return {section: dict(yield_section(self[section])) for section in self}
+        def as_dict(self) -> typing.Dict[str, dict]:
+            def yield_section(
+                sect,
+            ) -> typing.Generator[typing.Tuple[str, typing.Any], None, None]:
+                for name in sect:
+                    v = sect[name]
+                    if isinstance(v, str) and "\n" in v:
+                        yield name, v.splitlines()
+                        continue
+                    yield name, v
 
-    def set_option(
-        self,
-        section: str,
-        key: str,
-        value: typing.Any,
-        args: typing.Optional["TaskArgs"] = None,
-    ):
-        if args is None:
-            args = TaskArgs()
+            return {section: dict(yield_section(self[section])) for section in self}
 
-        if isinstance(value, list):
-            value = args.ini_list_sep.join(to_text(item) for item in value)
-        elif isinstance(value, dict):
-            value = json.dumps(value, sort_keys=True)
+        def set_option(
+            self,
+            section: str,
+            key: str,
+            value: typing.Any,
+            args: typing.Optional["TaskArgs"] = None,
+        ):
+            if args is None:
+                args = TaskArgs()
 
-        xkey = key.strip()
-        ind_idx = key.index(xkey)
-        if ind_idx > 0:
-            indent = key[0:ind_idx]
+            if isinstance(value, list):
+                value = args.ini_list_sep.join(to_text(item) for item in value)
+            elif isinstance(value, dict):
+                value = json.dumps(value, sort_keys=True)
 
-            if section not in self:
-                self._new_namespace(section)
+            xkey = key.strip()
+            ind_idx = key.index(xkey)
+            if ind_idx > 0:
+                indent = key[0:ind_idx]
 
-            sec = self[section]
-            if xkey in sec:
-                sec[xkey] = value  # keep indentation
+                if section not in self:
+                    self._new_namespace(section)
+
+                sec = self[section]
+                if xkey in sec:
+                    sec[xkey] = value  # keep indentation
+                else:
+                    # See ini.INISection.__setitem__
+                    ol = OptionLine(xkey, value)
+                    ol.indent = indent
+                    obj = ini.LineContainer(ol)
+                    sec._lines[-1].add(obj)
+                    sec._options[xkey] = obj
+
             else:
-                # See ini.INISection.__setitem__
-                ol = OptionLine(xkey, value)
-                ol.indent = indent
-                obj = ini.LineContainer(ol)
-                sec._lines[-1].add(obj)
-                sec._options[xkey] = obj
+                self[section][key] = value
 
-        else:
-            self[section][key] = value
+else:
+
+    class INIConfig:  # type: ignore[no-redef]
+        @classmethod
+        def from_string(cls, resultant: str, source: str = "<???>", **kwargs):
+            del cls, resultant, source, kwargs
+            raise AnsibleActionFail(
+                "iniparse python package is required for config_type=ini"
+            )
 
 
 @dataclasses.dataclass
@@ -221,7 +247,7 @@ class SimpleMerger:
                         base_items.get(key, {})  # type: ignore
                     )
 
-                elif not isinstance(value, int) and (
+                elif isinstance(value, str) and (
                     "," in value or ("\n" in value and not self.yml_multilines)
                 ):
                     base_items[key] = re.split(",|\n", value)
@@ -280,23 +306,39 @@ class TaskArgs:
     comment_end_string: str = None  # type: ignore
     render_template: bool = True
     state: str = None  # type: ignore # should not be set
-    _patcher: typing.Union[None, SimpleMerger, JsonPatch] = None
+    _temp_src: typing.Union[None, str] = None
+    _patcher: typing.Optional[typing.Any] = None
 
     @classmethod
     def from_args(cls, task_args: dict) -> "TaskArgs":
-        def yiled_args() -> typing.Generator[typing.Tuple[str, typing.Any], None, None]:
+        def field_has_type(field_type: typing.Any, target_type: type) -> bool:
+            if field_type is target_type:
+                return True
+            origin = typing.get_origin(field_type)
+            if origin is typing.Union:
+                return any(
+                    field_has_type(arg, target_type)
+                    for arg in typing.get_args(field_type)
+                )
+            return False
+
+        def yield_args() -> typing.Generator[typing.Tuple[str, typing.Any], None, None]:
             for field in dataclasses.fields(cls):
-                v = task_args.get(field.name, field.default)
-                if isinstance(field.type, bool):
+                if field.name not in task_args:
+                    continue
+                v = task_args[field.name]
+                if v is None:
+                    yield field.name, None
+                elif field_has_type(field.type, bool):
                     yield field.name, boolean(v, strict=False)
-                elif isinstance(field.type, string_types) and v is not None:
+                elif field_has_type(field.type, str):
                     yield field.name, ensure_type(v, "string")
-                elif isinstance(field.type, int) and v is not None:
+                elif field_has_type(field.type, int):
                     yield field.name, ensure_type(v, "integer")
-                elif v is not None:
+                else:
                     yield field.name, v
 
-        return cls(**dict(yiled_args()))
+        return cls(**dict(yield_args()))
 
 
 class ActionModule(ActionBase):
@@ -308,6 +350,10 @@ class ActionModule(ActionBase):
         elif args.config_type == "json":
             return self.return_config_overrides_json(resultant, args, json.loads)
         elif args.config_type == "hjson":
+            if hjson is None:
+                raise AnsibleActionFail(
+                    "hjson python package is required for config_type=hjson"
+                )
             return self.return_config_overrides_json(resultant, args, hjson.loads)
         elif args.config_type == "yaml":
             return self.return_config_overrides_yaml(resultant, args)
@@ -324,7 +370,10 @@ class ActionModule(ActionBase):
         config.merge_repeated_options()
 
         if isinstance(args._patcher, SimpleMerger):
-            assert isinstance(args.config_overrides, dict)
+            if not isinstance(args.config_overrides, dict):
+                raise AnsibleActionFail(
+                    "Simple merge mode requires config_overrides to be a dictionary."
+                )
             for section, items in args.config_overrides.items():
                 # If the items value is not a dictionary it is assumed that the
                 #  value is a default item for this config type.
@@ -334,7 +383,7 @@ class ActionModule(ActionBase):
                     for key, value in items.items():
                         config.set_option(section, key, value, args)
 
-        elif isinstance(args._patcher, JsonPatch):
+        elif JsonPatch is not None and isinstance(args._patcher, JsonPatch):
             base_items = config.as_dict()
             args._patcher.apply(base_items, in_place=True)
             for section, items in base_items.items():
@@ -373,6 +422,10 @@ class ActionModule(ActionBase):
         self, resultant: str, args: TaskArgs
     ) -> typing.Tuple[str, _DocT]:
         """Return config yaml and dict of merged config"""
+        if YAML is None:
+            raise AnsibleActionFail(
+                "ruamel.yaml python package is required for config_type=yaml"
+            )
         yaml = YAML(typ=args.strip_comments and "safe" or "rt")  # type: ignore
         yaml.default_flow_style = False
         yaml.indent(
@@ -390,10 +443,10 @@ class ActionModule(ActionBase):
                 resultant,
                 flags=re.MULTILINE,
             )
-            assert sep_count in [
-                0,
-                1,
-            ], "More than one YAML document separator is not supported!"
+            if sep_count not in [0, 1]:
+                raise AnsibleActionFail(
+                    "More than one YAML document separator is not supported!"
+                )
 
         original_resultant = yaml.load(StringIO(resultant)) or {}
         merged_resultant = self._patch(args, original_resultant)
@@ -419,6 +472,10 @@ class ActionModule(ActionBase):
         self, resultant: str, args: TaskArgs
     ) -> typing.Tuple[str, _DocT]:
         """Returns config toml and dict of merged config"""
+        if tomlkit is None:
+            raise AnsibleActionFail(
+                "tomlkit python package is required for config_type=toml"
+            )
         original_resultant = tomlkit.loads(resultant)
         merged_resultant = self._patch(args, original_resultant)
         return (
@@ -470,14 +527,17 @@ class ActionModule(ActionBase):
                 f.close()
 
             args.src = content_tempfile
+            args._temp_src = content_tempfile
             args.content = ""
 
         try:
             args.source = self._find_needle("templates", args.src)
         except AnsibleError as ex:
+            if args._temp_src and os.path.exists(args._temp_src):
+                os.unlink(args._temp_src)
             raise AnsibleActionFail("failed to find template file") from ex
 
-        searchpath = task_vars.get("ansible_search_path", [])
+        searchpath = list(task_vars.get("ansible_search_path", []))
         searchpath.extend([self._loader._basedir, os.path.dirname(args.source)])
 
         args.searchpath = []
@@ -500,6 +560,10 @@ class ActionModule(ActionBase):
         #     args.config_overrides = {}
 
         if isinstance(args.config_overrides, list):
+            if JsonPatch is None:
+                raise AnsibleActionFail(
+                    "jsonpatch python package is required for JSON Patch overrides"
+                )
             args._patcher = JsonPatch(args.config_overrides)
 
         elif isinstance(args.config_overrides, dict):
@@ -541,24 +605,37 @@ class ActionModule(ActionBase):
             )
 
             if args.render_template:
-                # force templar to use AnsibleEnvironment to prevent issues with native types
-                # https://github.com/ansible/ansible/issues/46169
+                template_overrides = {
+                    key: value
+                    for key, value in {
+                        "block_start_string": args.block_start_string,
+                        "block_end_string": args.block_end_string,
+                        "variable_start_string": args.variable_start_string,
+                        "variable_end_string": args.variable_end_string,
+                        "comment_start_string": args.comment_start_string,
+                        "comment_end_string": args.comment_end_string,
+                    }.items()
+                    if value is not None
+                }
+
                 templar = self._templar.copy_with_new_env(
-                    environment_class=AnsibleEnvironment,
                     searchpath=args.searchpath,
-                    block_start_string=args.block_start_string,
-                    block_end_string=args.block_end_string,
-                    variable_start_string=args.variable_start_string,
-                    variable_end_string=args.variable_end_string,
-                    comment_start_string=args.comment_start_string,
-                    comment_end_string=args.comment_end_string,
                     available_variables=temp_vars,
                 )
-                resultant = templar.do_template(
-                    template_data,
-                    preserve_trailing_newlines=True,
-                    escape_backslashes=False,
-                )
+                if hasattr(templar, "template"):
+                    resultant = templar.template(
+                        template_data,
+                        preserve_trailing_newlines=True,
+                        escape_backslashes=False,
+                        overrides=template_overrides or None,
+                    )
+                else:
+                    resultant = templar.do_template(
+                        template_data,
+                        preserve_trailing_newlines=True,
+                        escape_backslashes=False,
+                        overrides=template_overrides or None,
+                    )
 
             else:
                 resultant = template_data
@@ -568,8 +645,8 @@ class ActionModule(ActionBase):
         except Exception as ex:
             raise AnsibleActionFail(to_text(ex)) from ex
         finally:
-            if not args.src and args.source:
-                os.unlink(args.source)
+            if args._temp_src and os.path.exists(args._temp_src):
+                os.unlink(args._temp_src)
 
         resultant, config_base = self.type_merger(resultant, args)
 

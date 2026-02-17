@@ -1,7 +1,16 @@
+# -*- coding: utf-8 -*-
+# Copyright: (c) 2024, Sardina Systems Ltd.
+# SPDX-License-Identifier: Apache-2.0
+
 import datetime as dt
 import typing
 
-from oncalendar import OnCalendar
+from ansible.errors import AnsibleFilterTypeError
+
+try:
+    from oncalendar import OnCalendar
+except ImportError:
+    OnCalendar = None  # type: ignore[assignment,misc]
 
 
 def oncalendar(
@@ -11,6 +20,9 @@ def oncalendar(
     iter_max: int = 0,
 ) -> typing.Iterable[dt.datetime]:
     """Parse systemd OnCalendar spec and return to stream of next invocation dates"""
+
+    if OnCalendar is None:
+        raise AnsibleFilterTypeError("oncalendar python package is required")
 
     if isinstance(start_time, str):
         start_time = dt.datetime.fromisoformat(start_time)
@@ -25,8 +37,11 @@ def oncalendar(
     if iter_max <= 0:
         return it
 
-    for _ in range(iter_max):
-        yield next(it)
+    for _count in range(iter_max):
+        try:
+            yield next(it)
+        except StopIteration:
+            return
 
 
 def oncalendar_dur(
@@ -40,9 +55,12 @@ def oncalendar_dur(
     if iter_max > 0:
         iter_max += 1
 
-    it = oncalendar(spec, start_time, tz, iter_max)
+    it = iter(oncalendar(spec, start_time, tz, iter_max))
 
-    prev: dt.datetime = next(it)  # type: ignore
+    try:
+        prev = next(it)
+    except StopIteration:
+        return
     for new in it:
         d: dt.timedelta = new - prev
         yield d.total_seconds()
