@@ -6,17 +6,16 @@ from datetime import timedelta
 
 import durationpy
 from ansible.errors import AnsibleFilterTypeError
-from ansible.module_utils.six import string_types
 
 _StrOrList = typing.Union[str, typing.Iterable[str]]
 _FloatOrList = typing.Union[float, typing.Iterable[float]]
 
 
 def dur2sec(dur: _StrOrList) -> _FloatOrList:
-    if not isinstance(dur, (string_types, Iterable)):
+    if not isinstance(dur, (str, Iterable)):
         raise AnsibleFilterTypeError(f"dur should be string or list, got: {dur!r}")
 
-    if isinstance(dur, string_types):
+    if isinstance(dur, str):
         td = durationpy.from_str(dur)
         return td.total_seconds()
 

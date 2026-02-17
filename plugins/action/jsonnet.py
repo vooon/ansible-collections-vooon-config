@@ -23,7 +23,6 @@ from ansible.errors import (
 )
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.parsing.convert_bool import boolean
-from ansible.module_utils.six import string_types
 from ansible.plugins.action import ActionBase
 from ansible.template import generate_ansible_template_vars
 from ruamel.yaml import YAML
@@ -57,7 +56,7 @@ class ActionModule(ActionBase):
         for s_type in ("src", "dest", "state"):
             if s_type in self._task.args:
                 value = ensure_type(self._task.args[s_type], "string")
-                if value is not None and not isinstance(value, string_types):
+                if value is not None and not isinstance(value, str):
                     raise AnsibleActionFail(
                         "%s is expected to be a string, but got %s instead"
                         % (s_type, type(value))

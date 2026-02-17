@@ -38,7 +38,6 @@ from ansible import constants as C
 from ansible.config.manager import ensure_type
 from ansible.errors import AnsibleAction, AnsibleActionFail, AnsibleError
 from ansible.module_utils.parsing.convert_bool import boolean
-from ansible.module_utils.six import string_types
 from ansible.plugins.action import ActionBase
 from ansible.template import generate_ansible_template_vars
 from iniparse import ini
@@ -155,10 +154,10 @@ class INIConfig(ini.INIConfig):
     def as_dict(self) -> typing.Dict[str, dict]:
         def yield_section(
             sect,
-        ) -> typing.Generator[typing.Tuple[str, dict], None, None]:
+        ) -> typing.Generator[typing.Tuple[str, typing.Any], None, None]:
             for name in sect:
                 v = sect[name]
-                if isinstance(v, string_types) and "\n" in v:
+                if isinstance(v, str) and "\n" in v:
                     yield name, v.splitlines()
                     continue
                 yield name, v
@@ -220,7 +219,7 @@ class SimpleMerger:
                         base_items.get(key, {})  # type: ignore
                     )
 
-                elif isinstance(value, string_types) and (
+                elif isinstance(value, str) and (
                     "," in value or ("\n" in value and not self.yml_multilines)
                 ):
                     base_items[key] = re.split(",|\n", value)
@@ -289,7 +288,10 @@ class TaskArgs:
                 return True
             origin = typing.get_origin(field_type)
             if origin is typing.Union:
-                return any(field_has_type(arg, target_type) for arg in typing.get_args(field_type))
+                return any(
+                    field_has_type(arg, target_type)
+                    for arg in typing.get_args(field_type)
+                )
             return False
 
         def yield_args() -> typing.Generator[typing.Tuple[str, typing.Any], None, None]:
