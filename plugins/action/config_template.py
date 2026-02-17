@@ -37,7 +37,6 @@ import tomlkit
 from ansible import constants as C
 from ansible.config.manager import ensure_type
 from ansible.errors import AnsibleAction, AnsibleActionFail, AnsibleError
-from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import string_types
 from ansible.plugins.action import ActionBase
@@ -48,10 +47,10 @@ from jsonpatch import JsonPatch
 from ruamel.yaml import YAML
 
 try:
-    from ansible.template import AnsibleEnvironment
+    from ansible.module_utils.common.text.converters import to_bytes, to_text
 except ImportError:
-    # for ansible-core > 2.20
-    from jinja2.environment import Environment as AnsibleEnvironment
+    # Compatibility with older ansible-core.
+    from ansible.module_utils._text import to_bytes, to_text
 
 _DocT = typing.Union[dict, list]
 
@@ -221,7 +220,7 @@ class SimpleMerger:
                         base_items.get(key, {})  # type: ignore
                     )
 
-                elif not isinstance(value, int) and (
+                elif isinstance(value, string_types) and (
                     "," in value or ("\n" in value and not self.yml_multilines)
                 ):
                     base_items[key] = re.split(",|\n", value)
@@ -280,23 +279,36 @@ class TaskArgs:
     comment_end_string: str = None  # type: ignore
     render_template: bool = True
     state: str = None  # type: ignore # should not be set
+    _temp_src: typing.Union[None, str] = None
     _patcher: typing.Union[None, SimpleMerger, JsonPatch] = None
 
     @classmethod
     def from_args(cls, task_args: dict) -> "TaskArgs":
-        def yiled_args() -> typing.Generator[typing.Tuple[str, typing.Any], None, None]:
+        def field_has_type(field_type: typing.Any, target_type: type) -> bool:
+            if field_type is target_type:
+                return True
+            origin = typing.get_origin(field_type)
+            if origin is typing.Union:
+                return any(field_has_type(arg, target_type) for arg in typing.get_args(field_type))
+            return False
+
+        def yield_args() -> typing.Generator[typing.Tuple[str, typing.Any], None, None]:
             for field in dataclasses.fields(cls):
-                v = task_args.get(field.name, field.default)
-                if isinstance(field.type, bool):
+                if field.name not in task_args:
+                    continue
+                v = task_args[field.name]
+                if v is None:
+                    yield field.name, None
+                elif field_has_type(field.type, bool):
                     yield field.name, boolean(v, strict=False)
-                elif isinstance(field.type, string_types) and v is not None:
+                elif field_has_type(field.type, str):
                     yield field.name, ensure_type(v, "string")
-                elif isinstance(field.type, int) and v is not None:
+                elif field_has_type(field.type, int):
                     yield field.name, ensure_type(v, "integer")
-                elif v is not None:
+                else:
                     yield field.name, v
 
-        return cls(**dict(yiled_args()))
+        return cls(**dict(yield_args()))
 
 
 class ActionModule(ActionBase):
@@ -470,14 +482,17 @@ class ActionModule(ActionBase):
                 f.close()
 
             args.src = content_tempfile
+            args._temp_src = content_tempfile
             args.content = ""
 
         try:
             args.source = self._find_needle("templates", args.src)
         except AnsibleError as ex:
+            if args._temp_src and os.path.exists(args._temp_src):
+                os.unlink(args._temp_src)
             raise AnsibleActionFail("failed to find template file") from ex
 
-        searchpath = task_vars.get("ansible_search_path", [])
+        searchpath = list(task_vars.get("ansible_search_path", []))
         searchpath.extend([self._loader._basedir, os.path.dirname(args.source)])
 
         args.searchpath = []
@@ -541,24 +556,37 @@ class ActionModule(ActionBase):
             )
 
             if args.render_template:
-                # force templar to use AnsibleEnvironment to prevent issues with native types
-                # https://github.com/ansible/ansible/issues/46169
+                template_overrides = {
+                    key: value
+                    for key, value in {
+                        "block_start_string": args.block_start_string,
+                        "block_end_string": args.block_end_string,
+                        "variable_start_string": args.variable_start_string,
+                        "variable_end_string": args.variable_end_string,
+                        "comment_start_string": args.comment_start_string,
+                        "comment_end_string": args.comment_end_string,
+                    }.items()
+                    if value is not None
+                }
+
                 templar = self._templar.copy_with_new_env(
-                    environment_class=AnsibleEnvironment,
                     searchpath=args.searchpath,
-                    block_start_string=args.block_start_string,
-                    block_end_string=args.block_end_string,
-                    variable_start_string=args.variable_start_string,
-                    variable_end_string=args.variable_end_string,
-                    comment_start_string=args.comment_start_string,
-                    comment_end_string=args.comment_end_string,
                     available_variables=temp_vars,
                 )
-                resultant = templar.do_template(
-                    template_data,
-                    preserve_trailing_newlines=True,
-                    escape_backslashes=False,
-                )
+                if hasattr(templar, "template"):
+                    resultant = templar.template(
+                        template_data,
+                        preserve_trailing_newlines=True,
+                        escape_backslashes=False,
+                        overrides=template_overrides or None,
+                    )
+                else:
+                    resultant = templar.do_template(
+                        template_data,
+                        preserve_trailing_newlines=True,
+                        escape_backslashes=False,
+                        overrides=template_overrides or None,
+                    )
 
             else:
                 resultant = template_data
@@ -568,8 +596,8 @@ class ActionModule(ActionBase):
         except Exception as ex:
             raise AnsibleActionFail(to_text(ex)) from ex
         finally:
-            if not args.src and args.source:
-                os.unlink(args.source)
+            if args._temp_src and os.path.exists(args._temp_src):
+                os.unlink(args._temp_src)
 
         resultant, config_base = self.type_merger(resultant, args)
 
