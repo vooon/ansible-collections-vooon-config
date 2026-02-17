@@ -19,8 +19,7 @@ def nested_dict2items(
             p = parent + (dict(key=k, value=v),)
 
             if isinstance(v, Mapping):
-                for vv in recursive_down(v, p):
-                    yield vv
+                yield from recursive_down(v, p)
 
             else:
                 yield p

@@ -12,7 +12,6 @@ import tempfile
 import typing
 from io import StringIO
 
-import _jsonnet
 from ansible import constants as C
 from ansible.config.manager import ensure_type
 from ansible.errors import (
@@ -25,7 +24,15 @@ from ansible.module_utils.common.text.converters import to_bytes, to_native, to_
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.template import generate_ansible_template_vars
-from ruamel.yaml import YAML
+
+try:
+    import _jsonnet
+except ImportError:
+    _jsonnet = None  # type: ignore[assignment]
+try:
+    from ruamel.yaml import YAML
+except ImportError:
+    YAML = None  # type: ignore[assignment,misc]
 
 
 class ActionModule(ActionBase):
@@ -79,6 +86,11 @@ class ActionModule(ActionBase):
         output_encoding = self._task.args.get("output_encoding", "utf-8") or "utf-8"
 
         try:
+            if _jsonnet is None:
+                raise AnsibleActionFail(
+                    "jsonnet python package is required for jsonnet action plugin"
+                )
+
             # logical validation
             if state is not None:
                 raise AnsibleActionFail("'state' cannot be specified on a template")
@@ -143,6 +155,10 @@ class ActionModule(ActionBase):
                     resultant = result_obj
 
                 if format == "yaml":
+                    if YAML is None:
+                        raise AnsibleActionFail(
+                            "ruamel.yaml python package is required for format=yaml"
+                        )
                     yaml = YAML(typ="safe")
                     yaml.default_flow_style = False
                     yaml.indent(

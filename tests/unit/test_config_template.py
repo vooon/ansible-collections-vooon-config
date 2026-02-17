@@ -8,8 +8,6 @@ Test config_template funcs
 import pathlib
 import sys
 
-import pytest  # noqa
-
 actions_path = pathlib.Path(__file__).parent / ".." / ".." / "plugins" / "action"
 sys.path.insert(0, str(actions_path.absolute()))
 

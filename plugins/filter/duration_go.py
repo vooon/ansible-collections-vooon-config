@@ -7,14 +7,21 @@ import typing
 from collections.abc import Iterable
 from datetime import timedelta
 
-import durationpy
 from ansible.errors import AnsibleFilterTypeError
+
+try:
+    import durationpy
+except ImportError:
+    durationpy = None  # type: ignore[assignment]
 
 _StrOrList = typing.Union[str, typing.Iterable[str]]
 _FloatOrList = typing.Union[float, typing.Iterable[float]]
 
 
 def dur2sec(dur: _StrOrList) -> _FloatOrList:
+    if durationpy is None:
+        raise AnsibleFilterTypeError("durationpy python package is required")
+
     if not isinstance(dur, (str, Iterable)):
         raise AnsibleFilterTypeError(f"dur should be string or list, got: {dur!r}")
 
@@ -26,6 +33,9 @@ def dur2sec(dur: _StrOrList) -> _FloatOrList:
 
 
 def sec2dur(sec: _FloatOrList) -> _StrOrList:
+    if durationpy is None:
+        raise AnsibleFilterTypeError("durationpy python package is required")
+
     if not isinstance(sec, (float, Iterable)):
         raise AnsibleFilterTypeError(f"sec should be float or list, got: {sec!r}")
 

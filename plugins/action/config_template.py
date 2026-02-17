@@ -32,18 +32,35 @@ import tempfile
 import typing
 from io import StringIO
 
-import hjson
-import tomlkit
 from ansible import constants as C
 from ansible.config.manager import ensure_type
 from ansible.errors import AnsibleAction, AnsibleActionFail, AnsibleError
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.template import generate_ansible_template_vars
-from iniparse import ini
-from iniparse.utils import tidy as ini_tidy
-from jsonpatch import JsonPatch
-from ruamel.yaml import YAML
+
+try:
+    from jsonpatch import JsonPatch
+except ImportError:
+    JsonPatch = None  # type: ignore[assignment,misc]
+try:
+    from iniparse import ini
+    from iniparse.utils import tidy as ini_tidy
+except ImportError:
+    ini = None  # type: ignore[assignment]
+    ini_tidy = None  # type: ignore[assignment]
+try:
+    import hjson
+except ImportError:
+    hjson = None  # type: ignore[assignment]
+try:
+    import tomlkit
+except ImportError:
+    tomlkit = None  # type: ignore[assignment]
+try:
+    from ruamel.yaml import YAML
+except ImportError:
+    YAML = None  # type: ignore[assignment,misc]
 
 try:
     from ansible.module_utils.common.text.converters import to_bytes, to_text
@@ -54,152 +71,163 @@ except ImportError:
 _DocT = typing.Union[dict, list]
 
 
-class OptionLine(ini.OptionLine):
-    indent = ""
+if ini is not None:
 
-    regex = re.compile(
-        r"^(?P<indent>[\s]*)"
-        r"(?P<name>[^:=\s[][^:=]*)"
-        r"(?P<sep>[:=]\s*)"
-        r"(?P<value>.*)$"
-    )
+    class OptionLine(ini.OptionLine):
+        indent = ""
 
-    indent_regex = re.compile(r"^(?P<indent>[\s]*)")
+        regex = re.compile(
+            r"^(?P<indent>[\s]*)"
+            r"(?P<name>[^:=\s[][^:=]*)"
+            r"(?P<sep>[:=]\s*)"
+            r"(?P<value>.*)$"
+        )
 
-    def to_string(self) -> str:
-        return self.indent + super().to_string()
+        indent_regex = re.compile(r"^(?P<indent>[\s]*)")
 
-    @classmethod
-    def parse(cls, line: str) -> typing.Optional["OptionLine"]:
-        instance = super().parse(line)
-        if instance is not None:
-            m = cls.indent_regex.match(line)
-            if m:
-                instance.indent = m.group("indent")
+        def to_string(self) -> str:
+            return self.indent + super().to_string()
 
-        return instance
+        @classmethod
+        def parse(cls, line: str) -> typing.Optional["OptionLine"]:
+            instance = super().parse(line)
+            if instance is not None:
+                m = cls.indent_regex.match(line)
+                if m:
+                    instance.indent = m.group("indent")
 
+            return instance
 
-class INIConfig(ini.INIConfig):
-    _line_types = [
-        ini.EmptyLine,
-        ini.CommentLine,
-        ini.SectionLine,
-        OptionLine,
-        ini.ContinuationLine,
-    ]
-    _injected_default_section: bool = False
+    class INIConfig(ini.INIConfig):
+        _line_types = [
+            ini.EmptyLine,
+            ini.CommentLine,
+            ini.SectionLine,
+            OptionLine,
+            ini.ContinuationLine,
+        ]
+        _injected_default_section: bool = False
 
-    @classmethod
-    def from_string(
-        cls, resultant: str, source: str = "<???>", **kwargs
-    ) -> "INIConfig":
-        if resultant.endswith("\n"):
-            resultant = resultant[0:-1]
+        @classmethod
+        def from_string(
+            cls, resultant: str, source: str = "<???>", **kwargs
+        ) -> "INIConfig":
+            if resultant.endswith("\n"):
+                resultant = resultant[0:-1]
 
-        ini.DEFAULTSECT = "@@disable_default_section_special_handling"
-        ini.change_comment_syntax(";#", allow_rem=False)
+            ini.DEFAULTSECT = "@@disable_default_section_special_handling"
+            ini.change_comment_syntax(";#", allow_rem=False)
 
-        buf = StringIO(resultant)
-        buf.name = source
+            buf = StringIO(resultant)
+            buf.name = source
 
-        try:
-            instance = cls(buf, optionxformvalue=str, **kwargs)
-        except ini.MissingSectionHeaderError:
-            # Fallback for .env like files used by systemd
-            buf.seek(0)
-            buf.write("[DEFAULT]\n")
-            buf.write(resultant)
-            buf.seek(0)
+            try:
+                instance = cls(buf, optionxformvalue=str, **kwargs)
+            except ini.MissingSectionHeaderError:
+                # Fallback for .env like files used by systemd
+                buf.seek(0)
+                buf.write("[DEFAULT]\n")
+                buf.write(resultant)
+                buf.seek(0)
 
-            instance = cls(buf, optionxformvalue=str, **kwargs)
-            instance._injected_default_section = True
+                instance = cls(buf, optionxformvalue=str, **kwargs)
+                instance._injected_default_section = True
 
-        return instance
+            return instance
 
-    def to_string(self) -> str:
-        resultant = str(self)
-        if self._injected_default_section:
-            resultant = "\n".join(resultant.splitlines()[1:])
+        def to_string(self) -> str:
+            resultant = str(self)
+            if self._injected_default_section:
+                resultant = "\n".join(resultant.splitlines()[1:])
 
-        if not resultant.endswith("\n"):
-            resultant += "\n"
+            if not resultant.endswith("\n"):
+                resultant += "\n"
 
-        return resultant
+            return resultant
 
-    def merge_repeated_options(self) -> None:
-        for section_name in list(self):
-            section = self[section_name]
-            for container in section._lines:
-                if not isinstance(container, ini.LineContainer):
-                    continue
-
-                to_drop: typing.List[int] = []
-                for idx, line in enumerate(container.contents):
-                    if not isinstance(line, ini.LineContainer):
+        def merge_repeated_options(self) -> None:
+            for section_name in list(self):
+                section = self[section_name]
+                for container in section._lines:
+                    if not isinstance(container, ini.LineContainer):
                         continue
 
-                    opt = section._options[line.get_name()]
-                    if line is not opt:
-                        to_drop.append(idx)
-                        opt.extend(line.contents)
-                        opt.contents.sort(key=lambda x: x.line_number)
+                    to_drop: typing.List[int] = []
+                    for idx, line in enumerate(container.contents):
+                        if not isinstance(line, ini.LineContainer):
+                            continue
 
-                for idx in sorted(to_drop, reverse=True):
-                    del container.contents[idx]
+                        opt = section._options[line.get_name()]
+                        if line is not opt:
+                            to_drop.append(idx)
+                            opt.extend(line.contents)
+                            opt.contents.sort(key=lambda x: x.line_number)
 
-    def tidy(self):
-        ini_tidy(self)
+                    for idx in sorted(to_drop, reverse=True):
+                        del container.contents[idx]
 
-    def as_dict(self) -> typing.Dict[str, dict]:
-        def yield_section(
-            sect,
-        ) -> typing.Generator[typing.Tuple[str, typing.Any], None, None]:
-            for name in sect:
-                v = sect[name]
-                if isinstance(v, str) and "\n" in v:
-                    yield name, v.splitlines()
-                    continue
-                yield name, v
+        def tidy(self):
+            ini_tidy(self)
 
-        return {section: dict(yield_section(self[section])) for section in self}
+        def as_dict(self) -> typing.Dict[str, dict]:
+            def yield_section(
+                sect,
+            ) -> typing.Generator[typing.Tuple[str, typing.Any], None, None]:
+                for name in sect:
+                    v = sect[name]
+                    if isinstance(v, str) and "\n" in v:
+                        yield name, v.splitlines()
+                        continue
+                    yield name, v
 
-    def set_option(
-        self,
-        section: str,
-        key: str,
-        value: typing.Any,
-        args: typing.Optional["TaskArgs"] = None,
-    ):
-        if args is None:
-            args = TaskArgs()
+            return {section: dict(yield_section(self[section])) for section in self}
 
-        if isinstance(value, list):
-            value = args.ini_list_sep.join(to_text(item) for item in value)
-        elif isinstance(value, dict):
-            value = json.dumps(value, sort_keys=True)
+        def set_option(
+            self,
+            section: str,
+            key: str,
+            value: typing.Any,
+            args: typing.Optional["TaskArgs"] = None,
+        ):
+            if args is None:
+                args = TaskArgs()
 
-        xkey = key.strip()
-        ind_idx = key.index(xkey)
-        if ind_idx > 0:
-            indent = key[0:ind_idx]
+            if isinstance(value, list):
+                value = args.ini_list_sep.join(to_text(item) for item in value)
+            elif isinstance(value, dict):
+                value = json.dumps(value, sort_keys=True)
 
-            if section not in self:
-                self._new_namespace(section)
+            xkey = key.strip()
+            ind_idx = key.index(xkey)
+            if ind_idx > 0:
+                indent = key[0:ind_idx]
 
-            sec = self[section]
-            if xkey in sec:
-                sec[xkey] = value  # keep indentation
+                if section not in self:
+                    self._new_namespace(section)
+
+                sec = self[section]
+                if xkey in sec:
+                    sec[xkey] = value  # keep indentation
+                else:
+                    # See ini.INISection.__setitem__
+                    ol = OptionLine(xkey, value)
+                    ol.indent = indent
+                    obj = ini.LineContainer(ol)
+                    sec._lines[-1].add(obj)
+                    sec._options[xkey] = obj
+
             else:
-                # See ini.INISection.__setitem__
-                ol = OptionLine(xkey, value)
-                ol.indent = indent
-                obj = ini.LineContainer(ol)
-                sec._lines[-1].add(obj)
-                sec._options[xkey] = obj
+                self[section][key] = value
 
-        else:
-            self[section][key] = value
+else:
+
+    class INIConfig:  # type: ignore[no-redef]
+        @classmethod
+        def from_string(cls, resultant: str, source: str = "<???>", **kwargs):
+            del cls, resultant, source, kwargs
+            raise AnsibleActionFail(
+                "iniparse python package is required for config_type=ini"
+            )
 
 
 @dataclasses.dataclass
@@ -279,7 +307,7 @@ class TaskArgs:
     render_template: bool = True
     state: str = None  # type: ignore # should not be set
     _temp_src: typing.Union[None, str] = None
-    _patcher: typing.Union[None, SimpleMerger, JsonPatch] = None
+    _patcher: typing.Optional[typing.Any] = None
 
     @classmethod
     def from_args(cls, task_args: dict) -> "TaskArgs":
@@ -322,6 +350,10 @@ class ActionModule(ActionBase):
         elif args.config_type == "json":
             return self.return_config_overrides_json(resultant, args, json.loads)
         elif args.config_type == "hjson":
+            if hjson is None:
+                raise AnsibleActionFail(
+                    "hjson python package is required for config_type=hjson"
+                )
             return self.return_config_overrides_json(resultant, args, hjson.loads)
         elif args.config_type == "yaml":
             return self.return_config_overrides_yaml(resultant, args)
@@ -351,7 +383,7 @@ class ActionModule(ActionBase):
                     for key, value in items.items():
                         config.set_option(section, key, value, args)
 
-        elif isinstance(args._patcher, JsonPatch):
+        elif JsonPatch is not None and isinstance(args._patcher, JsonPatch):
             base_items = config.as_dict()
             args._patcher.apply(base_items, in_place=True)
             for section, items in base_items.items():
@@ -390,6 +422,10 @@ class ActionModule(ActionBase):
         self, resultant: str, args: TaskArgs
     ) -> typing.Tuple[str, _DocT]:
         """Return config yaml and dict of merged config"""
+        if YAML is None:
+            raise AnsibleActionFail(
+                "ruamel.yaml python package is required for config_type=yaml"
+            )
         yaml = YAML(typ=args.strip_comments and "safe" or "rt")  # type: ignore
         yaml.default_flow_style = False
         yaml.indent(
@@ -436,6 +472,10 @@ class ActionModule(ActionBase):
         self, resultant: str, args: TaskArgs
     ) -> typing.Tuple[str, _DocT]:
         """Returns config toml and dict of merged config"""
+        if tomlkit is None:
+            raise AnsibleActionFail(
+                "tomlkit python package is required for config_type=toml"
+            )
         original_resultant = tomlkit.loads(resultant)
         merged_resultant = self._patch(args, original_resultant)
         return (
@@ -520,6 +560,10 @@ class ActionModule(ActionBase):
         #     args.config_overrides = {}
 
         if isinstance(args.config_overrides, list):
+            if JsonPatch is None:
+                raise AnsibleActionFail(
+                    "jsonpatch python package is required for JSON Patch overrides"
+                )
             args._patcher = JsonPatch(args.config_overrides)
 
         elif isinstance(args.config_overrides, dict):

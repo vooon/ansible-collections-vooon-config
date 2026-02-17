@@ -8,9 +8,6 @@ Test oncalendar_dur filter
 import pathlib
 import sys
 
-import pytest  # noqa
-from ansible.errors import AnsibleFilterError  # noqa
-
 actions_path = pathlib.Path(__file__).parent / ".." / ".." / "plugins" / "filter"
 sys.path.insert(0, str(actions_path.absolute()))
 
