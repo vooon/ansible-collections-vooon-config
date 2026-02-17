@@ -16,7 +16,7 @@ DOCUMENTATION = """
 ---
 module: systemd_sysusers
 short_description: Manage systemd sysusers
-version_added: "2.9"
+version_added: "2.0.0"
 description:
   - "This module allows to create, update and remove overrides"
 
@@ -122,33 +122,37 @@ def run_module():
         after="",
     )
 
-    if not dirpath.exists():
-        dirpath.mkdir(mode=0o755, parents=True)
-
     if filepath.exists():
         diff["before_header"] = str(filepath)
         with filepath.open("r") as fd:
             diff["before"] = fd.read()
 
     if state == "present":
-        if not module.check_mode:
-            # create dirs and also validate file content
-            rc, out, err = module.run_command(
-                ["systemd-sysusers", "-"],
-                data=content,
-                check_rc=True,
-            )
+        # create config dir if needed
+        if not dirpath.exists():
+            changed = True
+            if not module.check_mode:
+                dirpath.mkdir(mode=0o755, parents=True)
 
         # write content to override file
         diff["after_header"] = str(filepath)
         diff["after"] = content
-        if diff["before"] != content:
+        content_changed = (not filepath.exists()) or (diff["before"] != content)
+        if content_changed:
+            # validate candidate content without mutating the system
+            module.run_command(
+                ["systemd-sysusers", "--dry-run", "-"],
+                data=content,
+                check_rc=True,
+            )
+
             changed = True
             if not module.check_mode:
                 with filepath.open("wb") as fd:
                     fd.write(content.encode("utf-8"))
 
-        changed = module.set_mode_if_different(filepath, fmode, changed)
+        if filepath.exists():
+            changed = module.set_mode_if_different(filepath, fmode, changed)
 
     elif state == "absent":
         # remove override file

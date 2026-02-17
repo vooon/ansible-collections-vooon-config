@@ -3,7 +3,7 @@
 DOCUMENTATION = """
 ---
 module: config_template
-version_added: 1.9.2
+version_added: "2.0.0"
 short_description: Renders template files providing a create/update override interface
 description:
   - The module contains the template functionality with the ability to override items
