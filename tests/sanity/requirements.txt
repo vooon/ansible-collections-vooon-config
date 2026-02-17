@@ -1,0 +1,9 @@
+# Runtime dependencies needed to import collection plugins during ansible-test sanity.
+ruamel.yaml
+tomlkit
+iniparse @ git+https://github.com/candlepin/python-iniparse.git
+hjson>=3,<4
+durationpy
+oncalendar>=1,<2
+jsonpatch>=1,<2
+jsonnet @ git+https://github.com/google/jsonnet.git
