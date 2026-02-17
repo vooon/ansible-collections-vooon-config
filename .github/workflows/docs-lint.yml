@@ -1,0 +1,45 @@
+---
+name: Docs Lint
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 4 * * 1"
+  pull_request:
+    paths:
+      - "plugins/**"
+      - "README.md"
+      - "CHANGELOG.rst"
+      - "changelogs/**"
+      - "meta/**"
+      - "galaxy.yml"
+      - ".github/workflows/docs-lint.yml"
+
+concurrency:
+  group: docs-lint-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  antsibull-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen --all-groups
+
+      - name: Lint collection docs
+        run: >-
+          uv run antsibull-docs lint-collection-docs --plugin-docs --skip-rstcheck
+          --validate-collection-refs=all --disallow-unknown-collection-refs .

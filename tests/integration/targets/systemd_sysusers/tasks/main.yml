@@ -1,0 +1,91 @@
+---
+- name: Ensure systemd-sysusers exists
+  ansible.builtin.command: command -v systemd-sysusers
+  register: sysusers_cmd
+  changed_when: false
+
+- name: Skip test if systemd-sysusers is unavailable
+  ansible.builtin.meta: end_host
+  when: sysusers_cmd.rc != 0
+
+- name: Define test paths
+  ansible.builtin.set_fact:
+    test_root: /tmp/vooon_config_ansible_test_sysusers
+    missing_dir: /tmp/vooon_config_ansible_test_sysusers/absent_only
+    present_dir: /tmp/vooon_config_ansible_test_sysusers/present
+    rule_name: ansible-test-sysusers
+    rule_content: |
+      u ansibletestuser 199 "Ansible Test User" /nonexistent
+
+- name: Remove path used for absent side-effect test
+  ansible.builtin.file:
+    path: "{{ missing_dir }}"
+    state: absent
+
+- name: Absent should not create missing config_dir
+  vooon.config.systemd_sysusers:
+    name: "{{ rule_name }}"
+    state: absent
+    config_dir: "{{ missing_dir }}"
+  register: absent_missing
+
+- name: Assert absent run is unchanged
+  ansible.builtin.assert:
+    that:
+      - not absent_missing.changed
+
+- name: Confirm absent path was not created
+  ansible.builtin.stat:
+    path: "{{ missing_dir }}"
+  register: missing_dir_stat
+
+- name: Assert missing config_dir is still absent
+  ansible.builtin.assert:
+    that:
+      - not missing_dir_stat.stat.exists
+
+- name: Ensure present test directory exists
+  ansible.builtin.file:
+    path: "{{ present_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: First present run should create or adjust file
+  vooon.config.systemd_sysusers:
+    name: "{{ rule_name }}"
+    state: present
+    config_dir: "{{ present_dir }}"
+    content: "{{ rule_content }}"
+  register: present_first
+
+- name: Assert first present run changed
+  ansible.builtin.assert:
+    that:
+      - present_first.changed
+
+- name: Second present run should be idempotent
+  vooon.config.systemd_sysusers:
+    name: "{{ rule_name }}"
+    state: present
+    config_dir: "{{ present_dir }}"
+    content: "{{ rule_content }}"
+  register: present_second
+
+- name: Assert second present run is unchanged
+  ansible.builtin.assert:
+    that:
+      - not present_second.changed
+
+- name: Check mode with same content should stay unchanged
+  vooon.config.systemd_sysusers:
+    name: "{{ rule_name }}"
+    state: present
+    config_dir: "{{ present_dir }}"
+    content: "{{ rule_content }}"
+  check_mode: true
+  register: present_check_same
+
+- name: Assert check mode no-op is unchanged
+  ansible.builtin.assert:
+    that:
+      - not present_check_same.changed

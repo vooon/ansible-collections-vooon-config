@@ -1,0 +1,12 @@
+---
+bugfixes:
+  - >-
+    ``systemd_sysusers`` now validates candidate rules with ``systemd-sysusers --dry-run``
+    instead of applying runtime changes during module execution.
+  - >-
+    ``systemd_sysusers`` no longer creates ``config_dir`` for ``state=absent`` and now
+    honors check mode for directory creation.
+minor_changes:
+  - >-
+    Added an ``ansible-test`` integration target for ``systemd_sysusers`` to verify
+    idempotency and absent/check-mode behavior.

@@ -191,7 +191,7 @@ wheels = [
 
 [[package]]
 name = "ansible-collections-vooon-config"
-version = "2.6.2"
+version = "3.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "durationpy" },

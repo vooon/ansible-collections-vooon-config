@@ -4,6 +4,7 @@ DOCUMENTATION = """
 ---
 module: jsonnet
 short_description: Renders template files using jsonnet format
+version_added: "2.6.0"
 description:
   - The module is an extension of the P(ansible.builtin.copy#module) module and all of attributes that can be
     set there are available to be set here.

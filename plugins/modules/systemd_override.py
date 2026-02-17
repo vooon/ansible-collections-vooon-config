@@ -16,7 +16,7 @@ DOCUMENTATION = """
 ---
 module: systemd_override
 short_description: Manage systemd overrides
-version_added: "2.9"
+version_added: "2.0.0"
 description:
   - "This module allows to create, update and remove overrides"
 
