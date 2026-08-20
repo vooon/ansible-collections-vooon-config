@@ -11,7 +11,7 @@ import sys
 actions_path = pathlib.Path(__file__).parent / ".." / ".." / "plugins" / "action"
 sys.path.insert(0, str(actions_path.absolute()))
 
-import config_template  # noqa
+import config_template
 
 INI_REPEATED_OPTS = """\
 [DEFAULT]

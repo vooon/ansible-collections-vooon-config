@@ -1,19 +1,17 @@
-# -*- coding: utf-8 -*-
 # Copyright: (c) 2024, Sardina Systems Ltd.
 # SPDX-License-Identifier: Apache-2.0
 
 
-import typing
 from collections.abc import Iterable
 
 from ansible.module_utils.parsing.convert_bool import boolean
 from jinja2.runtime import Undefined
 
-WhenConvertible = typing.Union[None, str, bool]
-WhenArg = typing.Union[WhenConvertible, typing.List[WhenConvertible]]
+WhenConvertible = None | str | bool
+WhenArg = WhenConvertible | list[WhenConvertible]
 
 
-class TestModule(object):
+class TestModule:
     """Ansible tests"""
 
     def tests(self):

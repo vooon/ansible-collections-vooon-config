@@ -1,0 +1,209 @@
+---
+- name: Define per-type render destinations
+  ansible.builtin.set_fact:
+    render_dir: "{{ test_root }}/render_types"
+
+- name: Ensure render output directory exists
+  ansible.builtin.file:
+    path: "{{ render_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Define template delimiter for negative assertions
+  ansible.builtin.set_fact:
+    tpl_open: "{{ '{' + '{' }}"
+
+- name: Render and verify JSON config with variables
+  block:
+    - name: Render JSON config (first run)
+      vooon.config.config_template:
+        src: render.json.j2
+        dest: "{{ render_dir }}/config.json"
+        config_type: json
+        config_overrides:
+          port: 9090
+      vars:
+        name: demo
+        port: 8080
+      register: json_first
+
+    - name: Assert JSON first run changed
+      ansible.builtin.assert:
+        that:
+          - json_first.changed
+
+    - name: Render JSON config (second run for idempotency)
+      vooon.config.config_template:
+        src: render.json.j2
+        dest: "{{ render_dir }}/config.json"
+        config_type: json
+        config_overrides:
+          port: 9090
+      vars:
+        name: demo
+        port: 8080
+      register: json_second
+
+    - name: Assert JSON second run unchanged
+      ansible.builtin.assert:
+        that:
+          - not json_second.changed
+
+    - name: Read rendered JSON
+      ansible.builtin.slurp:
+        src: "{{ render_dir }}/config.json"
+      register: json_file
+
+    - name: Assert JSON content resolved and merged
+      ansible.builtin.assert:
+        that:
+          - (json_file.content | b64decode | from_json)["name"] == "demo"
+          - (json_file.content | b64decode | from_json)["port"] == 9090
+          - (json_file.content | b64decode | from_json)["items"] == ["base"]
+          - (tpl_open not in (json_file.content | b64decode | string))
+
+- name: Render and verify YAML config with variables
+  block:
+    - name: Render YAML config
+      vooon.config.config_template:
+        src: render.yaml.j2
+        dest: "{{ render_dir }}/config.yaml"
+        config_type: yaml
+        config_overrides:
+          port: 9090
+      vars:
+        name: demo
+        port: 8080
+      register: yaml_first
+
+    - name: Assert YAML first run changed
+      ansible.builtin.assert:
+        that:
+          - yaml_first.changed
+
+    - name: Render YAML config (idempotency)
+      vooon.config.config_template:
+        src: render.yaml.j2
+        dest: "{{ render_dir }}/config.yaml"
+        config_type: yaml
+        config_overrides:
+          port: 9090
+      vars:
+        name: demo
+        port: 8080
+      register: yaml_second
+
+    - name: Assert YAML second run unchanged
+      ansible.builtin.assert:
+        that:
+          - not yaml_second.changed
+
+    - name: Read rendered YAML
+      ansible.builtin.slurp:
+        src: "{{ render_dir }}/config.yaml"
+      register: yaml_file
+
+    - name: Assert YAML content resolved and merged
+      ansible.builtin.assert:
+        that:
+          - (tpl_open not in (yaml_file.content | b64decode | string))
+          - (yaml_file.content | b64decode | from_yaml)["name"] == "demo"
+          - (yaml_file.content | b64decode | from_yaml)["port"] == 9090
+
+- name: Render and verify TOML config with variables
+  block:
+    - name: Render TOML config
+      vooon.config.config_template:
+        src: render.toml.j2
+        dest: "{{ render_dir }}/config.toml"
+        config_type: toml
+        config_overrides:
+          port: 9090
+      vars:
+        name: demo
+        port: 8080
+      register: toml_first
+
+    - name: Assert TOML first run changed
+      ansible.builtin.assert:
+        that:
+          - toml_first.changed
+
+    - name: Render TOML config (idempotency)
+      vooon.config.config_template:
+        src: render.toml.j2
+        dest: "{{ render_dir }}/config.toml"
+        config_type: toml
+        config_overrides:
+          port: 9090
+      vars:
+        name: demo
+        port: 8080
+      register: toml_second
+
+    - name: Assert TOML second run unchanged
+      ansible.builtin.assert:
+        that:
+          - not toml_second.changed
+
+    - name: Read rendered TOML
+      ansible.builtin.slurp:
+        src: "{{ render_dir }}/config.toml"
+      register: toml_file
+
+    - name: Assert TOML content resolved and merged
+      ansible.builtin.assert:
+        that:
+          - (tpl_open not in (toml_file.content | b64decode | string))
+          - ('name = "demo"' in (toml_file.content | b64decode | string))
+          - ('port = 9090' in (toml_file.content | b64decode | string))
+
+- name: Render and verify INI config with variables
+  block:
+    - name: Render INI config
+      vooon.config.config_template:
+        src: render.ini.j2
+        dest: "{{ render_dir }}/config.ini"
+        config_type: ini
+        config_overrides:
+          section:
+            name: overridden
+      vars:
+        name: demo
+        port: 8080
+      register: ini_first
+
+    - name: Assert INI first run changed
+      ansible.builtin.assert:
+        that:
+          - ini_first.changed
+
+    - name: Render INI config (idempotency)
+      vooon.config.config_template:
+        src: render.ini.j2
+        dest: "{{ render_dir }}/config.ini"
+        config_type: ini
+        config_overrides:
+          section:
+            name: overridden
+      vars:
+        name: demo
+        port: 8080
+      register: ini_second
+
+    - name: Assert INI second run unchanged
+      ansible.builtin.assert:
+        that:
+          - not ini_second.changed
+
+    - name: Read rendered INI
+      ansible.builtin.slurp:
+        src: "{{ render_dir }}/config.ini"
+      register: ini_file
+
+    - name: Assert INI content resolved and merged
+      ansible.builtin.assert:
+        that:
+          - (tpl_open not in (ini_file.content | b64decode | string))
+          - ('name = overridden' in (ini_file.content | b64decode | string))
+          - ('port = 8080' in (ini_file.content | b64decode | string))

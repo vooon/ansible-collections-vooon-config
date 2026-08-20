@@ -13,6 +13,8 @@ sys.path.insert(0, str(actions_path.absolute()))
 
 import oncalendar_dur as m  # noqa
 
+from itertools import islice
+
 SPEC = "Mon,Thu,Sun *-*-* 01,13:00:00"
 
 
@@ -21,6 +23,12 @@ def test_oncalendar():
     # print(dates)
 
     assert 5 == len(dates)
+
+
+def test_oncalendar_default_is_infinite_stream():
+    dates = list(islice(m.oncalendar(SPEC), 3))
+
+    assert 3 == len(dates)
 
 
 def test_oncalendar_dur():

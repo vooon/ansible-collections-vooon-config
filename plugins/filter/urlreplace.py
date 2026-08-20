@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
 # Copyright: (c) 2024, Sardina Systems Ltd.
 # SPDX-License-Identifier: Apache-2.0
 
 
-import typing
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -16,9 +14,9 @@ from .port import port as port_flt
 def url_replace(
     context,
     url: str,
-    pathadd: typing.Optional[str] = None,
-    path: typing.Optional[str] = None,
-    port: typing.Union[None, str, int] = 0,
+    pathadd: str | None = None,
+    path: str | None = None,
+    port: None | str | int = 0,
     **kwargs,
 ) -> str:
     """Replace URL parts, like path, port etc."""

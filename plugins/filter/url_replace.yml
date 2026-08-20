@@ -19,6 +19,7 @@ DOCUMENTATION:
     port:
       description: Replace port. Could be integer or identifier for P(vooon.config.port#filter).
       type: raw
+      default: 0
     scheme:
       description: Replace scheme
       type: string

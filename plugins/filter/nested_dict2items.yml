@@ -1,8 +1,8 @@
 ---
 DOCUMENTATION:
   name: nested_dict2items
-  short_description: Recursively walks trough dict of dicts and returns tuple of as many items as many levels of nesting you have
-  description: Recursively walks trough dict of dicts and returns tuple of as many items as many levels of nesting you have
+  short_description: Recursively walks through dict of dicts and returns tuple of as many items as many levels of nesting you have
+  description: Recursively walks through dict of dicts and returns tuple of as many items as many levels of nesting you have
   options:
     _input:
       description: The dictionary to transform

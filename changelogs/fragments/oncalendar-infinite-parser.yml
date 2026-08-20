@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - "oncalendar filter - fix the `oncalendar` filter returning an empty stream when `iter_max` is unset (or 0). The default (unbounded) mode now yields the stream of next invocation dates as documented, instead of yielding nothing."

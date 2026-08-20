@@ -1,0 +1,13 @@
+---
+release_summary: |-
+  This release modernizes the collection for ansible-core 2.20 and newer.
+
+  The ``config_template`` action plugin now properly renders Jinja variables on
+  ansible-core 2.20+ (the newer templating engine requires template data to be
+  marked as trusted) and handles ``config_type=yaml`` overrides that arrive as
+  ansible-core data-tagged values. Pre-2.20 compatibility wrappers were dropped,
+  and the minimum supported ansible-core version was raised to 2.20.
+
+  Also included are a fix to the ``oncalendar`` filter (unbounded iteration now
+  yields the documented stream of dates), removal of dead code, and cleanup of
+  type annotations, formatting and plugin documentation.

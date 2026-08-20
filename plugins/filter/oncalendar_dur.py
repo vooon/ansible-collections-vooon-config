@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright: (c) 2024, Sardina Systems Ltd.
 # SPDX-License-Identifier: Apache-2.0
 
@@ -15,7 +14,7 @@ except ImportError:
 
 def oncalendar(
     spec: str,
-    start_time: typing.Union[dt.datetime, str, None] = None,
+    start_time: dt.datetime | str | None = None,
     tz: dt.tzinfo = dt.UTC,
     iter_max: int = 0,
 ) -> typing.Iterable[dt.datetime]:
@@ -35,7 +34,8 @@ def oncalendar(
     it = OnCalendar(spec, start_time)
 
     if iter_max <= 0:
-        return it
+        yield from it
+        return
 
     for _count in range(iter_max):
         try:
@@ -46,7 +46,7 @@ def oncalendar(
 
 def oncalendar_dur(
     spec: str,
-    start_time: typing.Union[dt.datetime, str, None] = None,
+    start_time: dt.datetime | str | None = None,
     tz: dt.tzinfo = dt.UTC,
     iter_max: int = 0,
 ) -> typing.Iterable[float]:
@@ -68,7 +68,7 @@ def oncalendar_dur(
 
 
 class FilterModule:
-    """Ansible argsenvfmt jinja2 filters"""
+    """Ansible oncalendar_dur jinja2 filters"""
 
     def filters(self):
         return {

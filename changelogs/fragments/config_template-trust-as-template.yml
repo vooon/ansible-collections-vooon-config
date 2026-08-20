@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - "config_template - mark template data as trusted via ``ansible.plugins.action.template.trust_as_template`` so Jinja variables (``{{ var }}``) are actually rendered on ansible-core 2.20+. On 2.19+ the new templating engine refused to render untrusted template contents and left variables unresolved."

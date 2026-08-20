@@ -2,12 +2,20 @@
 DOCUMENTATION:
   name: argsenvfmt
   short_description: Format multi-line args to a single line
-  description: Format multi-line arguments/options to a single line for using in systemd's EnvironmetFile
+  description: Format multi-line arguments/options to a single line for using in systemd's EnvironmentFile
   options:
     _input:
       description: Arguments
       type: string
       required: true
+    quote:
+      description: Quote the result.
+      type: bool
+      default: true
+    multiline:
+      description: Keep multi-line output (useful for shell completion in systemd units).
+      type: bool
+      default: true
 
 EXAMPLES: |
 

@@ -1,5 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 # Copyright: (c) 2024, Sardina Systems Ltd.
 # SPDX-License-Identifier: Apache-2.0
 
@@ -62,9 +61,9 @@ EXAMPLES = """
 RETURN = """
 """
 
-from pathlib import Path  # noqa: E402 isort:skip
+from pathlib import Path
 
-from ansible.module_utils.basic import AnsibleModule  # noqa: E402 isort:skip
+from ansible.module_utils.basic import AnsibleModule
 
 
 def run_module():
@@ -72,7 +71,6 @@ def run_module():
         ("state", "present", ["content"]),
         ("state", "absent", []),
     ]
-    mutually_exclusive = []
     module_args = dict(
         name=dict(type="str", required=True),
         state=dict(
@@ -88,7 +86,6 @@ def run_module():
     module = AnsibleModule(
         argument_spec=module_args,
         required_if=required_if,
-        mutually_exclusive=mutually_exclusive,
         add_file_common_args=True,
         supports_check_mode=True,
     )
@@ -145,9 +142,6 @@ def run_module():
             changed = True
             if not module.check_mode:
                 filepath.unlink()
-
-    else:
-        module.fail_json(msg="unknown state")
 
     module.exit_json(
         changed=changed,

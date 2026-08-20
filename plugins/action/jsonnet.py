@@ -38,7 +38,7 @@ except ImportError:
 class ActionModule(ActionBase):
     TRANSFERS_FILES = True
 
-    def import_callback(self, dirs, rel) -> typing.Tuple[str, bytes]:
+    def import_callback(self, dirs, rel) -> tuple[str, bytes]:
         for d in dirs:
             try:
                 full_path = self._find_needle(d, rel)
@@ -47,7 +47,7 @@ class ActionModule(ActionBase):
             except AnsibleError:
                 continue
 
-        raise AnsibleError("Unable to find '%s' in expected paths." % to_native(rel))
+        raise AnsibleError(f"Unable to find '{to_native(rel)}' in expected paths.")
 
     def run(self, tmp=None, task_vars=None):
         """handler for template operations"""
@@ -59,14 +59,13 @@ class ActionModule(ActionBase):
         del tmp  # tmp no longer has any effect
 
         # Options type validation
-        # stings
+        # strings
         for s_type in ("src", "dest", "state"):
             if s_type in self._task.args:
                 value = ensure_type(self._task.args[s_type], "string")
                 if value is not None and not isinstance(value, str):
                     raise AnsibleActionFail(
-                        "%s is expected to be a string, but got %s instead"
-                        % (s_type, type(value))
+                        f"{s_type} is expected to be a string, but got {type(value)} instead"
                     )
                 self._task.args[s_type] = value
 
@@ -106,15 +105,13 @@ class ActionModule(ActionBase):
 
             mode = self._task.args.get("mode", None)
             if mode == "preserve":
-                mode = "0%03o" % stat.S_IMODE(os.stat(source).st_mode)
+                mode = f"0{stat.S_IMODE(os.stat(source).st_mode):03o}"
 
             # Get vault decrypted tmp file
             try:
                 tmp_source = self._loader.get_real_file(source)
             except AnsibleFileNotFound as e:
-                raise AnsibleActionFail(
-                    "could not find src=%s, %s" % (source, to_text(e))
-                )
+                raise AnsibleActionFail(f"could not find src={source}, {to_text(e)}")
             b_tmp_source = to_bytes(tmp_source, errors="surrogate_or_strict")
 
             # template the source data locally & get ready to transfer
@@ -174,7 +171,7 @@ class ActionModule(ActionBase):
             except AnsibleAction:
                 raise
             except Exception as e:
-                raise AnsibleActionFail("%s: %s" % (type(e).__name__, to_text(e)))
+                raise AnsibleActionFail(f"{type(e).__name__}: {to_text(e)}")
             finally:
                 self._loader.cleanup_tmp_file(b_tmp_source)
 

@@ -144,3 +144,6 @@
     that:
       - (patched_file.content | b64decode | from_json)["x"] == 42
       - (patched_file.content | b64decode | from_json)["patched"] is true
+
+- name: Render and verify json/yaml/toml/ini configs with variables
+  ansible.builtin.import_tasks: render_types.yml

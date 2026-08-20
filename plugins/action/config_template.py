@@ -37,6 +37,7 @@ from ansible.config.manager import ensure_type
 from ansible.errors import AnsibleAction, AnsibleActionFail, AnsibleError
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
+from ansible.plugins.action.template import trust_as_template
 from ansible.template import generate_ansible_template_vars
 
 try:
@@ -62,13 +63,39 @@ try:
 except ImportError:
     YAML = None  # type: ignore[assignment,misc]
 
-try:
-    from ansible.module_utils.common.text.converters import to_bytes, to_text
-except ImportError:
-    # Compatibility with older ansible-core.
-    from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_text
 
-_DocT = typing.Union[dict, list]
+_DocT = dict | list
+
+
+def _strip_ansible_tags(value: typing.Any) -> typing.Any:
+    """Recursively convert ansible data-tagged values (e.g. ``_AnsibleTaggedInt``)
+    derived from templated task args back to plain Python scalars/containers.
+
+    ruamel.yaml's round-trip representer relies on exact type lookups and refuses
+    to serialize tagged ``str``/``int``/``bool`` subclasses that ansible-core 2.20+
+    wraps values in.
+    """
+    if hasattr(value, "ca"):
+        # ruamel round-trip node (CommentedMap/CommentedSeq): keep structure and
+        # comments, but normalize any tagged children in place.
+        if isinstance(value, dict):
+            for key in list(value):
+                value[key] = _strip_ansible_tags(value[key])
+        elif isinstance(value, list):
+            for idx in range(len(value)):
+                value[idx] = _strip_ansible_tags(value[idx])
+        return value
+    if isinstance(value, dict):
+        return {key: _strip_ansible_tags(v) for key, v in value.items()}
+    if isinstance(value, (list, tuple, set)):
+        return [_strip_ansible_tags(v) for v in value]
+    for base in (bool, int, str, float):
+        if isinstance(value, base):
+            if value.__class__.__module__ == "builtins":
+                return value
+            return base(value)
+    return value
 
 
 if ini is not None:
@@ -152,7 +179,7 @@ if ini is not None:
                     if not isinstance(container, ini.LineContainer):
                         continue
 
-                    to_drop: typing.List[int] = []
+                    to_drop: list[int] = []
                     for idx, line in enumerate(container.contents):
                         if not isinstance(line, ini.LineContainer):
                             continue
@@ -169,10 +196,10 @@ if ini is not None:
         def tidy(self):
             ini_tidy(self)
 
-        def as_dict(self) -> typing.Dict[str, dict]:
+        def as_dict(self) -> dict[str, dict]:
             def yield_section(
                 sect,
-            ) -> typing.Generator[typing.Tuple[str, typing.Any], None, None]:
+            ) -> typing.Generator[tuple[str, typing.Any], None, None]:
                 for name in sect:
                     v = sect[name]
                     if isinstance(v, str) and "\n" in v:
@@ -236,7 +263,7 @@ class SimpleMerger:
     list_extend: bool = True
     yml_multilines: bool = False
 
-    def apply(self, base_items: _DocT, in_place: bool = True) -> _DocT:
+    def apply(self, base_items: _DocT) -> _DocT:
         """Recursively merge new_items into base_items."""
         if isinstance(self.new_items, dict):
             for key, value in self.new_items.items():
@@ -283,7 +310,7 @@ class TaskArgs:
     src: str = None  # type: ignore # local template file, type: ignore
     remote_src: bool = False  # use remote file as source
     content: typing.Any = None  # content, will be placed to temp file
-    config_overrides: typing.Optional[_DocT] = None
+    config_overrides: _DocT | None = None
     config_type: str = "ini"
     searchpath: list = dataclasses.field(default_factory=list)
     list_extend: bool = False
@@ -306,8 +333,8 @@ class TaskArgs:
     comment_end_string: str = None  # type: ignore
     render_template: bool = True
     state: str = None  # type: ignore # should not be set
-    _temp_src: typing.Union[None, str] = None
-    _patcher: typing.Optional[typing.Any] = None
+    _temp_src: None | str = None
+    _patcher: typing.Any | None = None
 
     @classmethod
     def from_args(cls, task_args: dict) -> "TaskArgs":
@@ -322,7 +349,7 @@ class TaskArgs:
                 )
             return False
 
-        def yield_args() -> typing.Generator[typing.Tuple[str, typing.Any], None, None]:
+        def yield_args() -> typing.Generator[tuple[str, typing.Any], None, None]:
             for field in dataclasses.fields(cls):
                 if field.name not in task_args:
                     continue
@@ -344,7 +371,7 @@ class TaskArgs:
 class ActionModule(ActionBase):
     TRANSFERS_FILES = True
 
-    def type_merger(self, resultant: str, args: TaskArgs) -> typing.Tuple[str, _DocT]:
+    def type_merger(self, resultant: str, args: TaskArgs) -> tuple[str, _DocT]:
         if args.config_type == "ini":
             return self.return_config_overrides_ini(resultant, args)
         elif args.config_type == "json":
@@ -364,7 +391,7 @@ class ActionModule(ActionBase):
 
     def return_config_overrides_ini(
         self, resultant: str, args: TaskArgs
-    ) -> typing.Tuple[str, _DocT]:
+    ) -> tuple[str, _DocT]:
         """Returns string value from a modified config file and dict of merged config"""
         config = INIConfig.from_string(resultant, args.source)
         config.merge_repeated_options()
@@ -385,7 +412,7 @@ class ActionModule(ActionBase):
 
         elif JsonPatch is not None and isinstance(args._patcher, JsonPatch):
             base_items = config.as_dict()
-            args._patcher.apply(base_items, in_place=True)
+            args._patcher.apply(base_items)
             for section, items in base_items.items():
                 for key, value in items.items():
                     config.set_option(section, key, value, args)
@@ -400,7 +427,7 @@ class ActionModule(ActionBase):
         resultant: str,
         args: TaskArgs,
         loads: typing.Callable[[typing.Any], typing.Any],
-    ) -> typing.Tuple[str, _DocT]:
+    ) -> tuple[str, _DocT]:
         """Returns config json and dict of merged config
 
         Its important to note that file ordering will not be preserved as the
@@ -420,7 +447,7 @@ class ActionModule(ActionBase):
 
     def return_config_overrides_yaml(
         self, resultant: str, args: TaskArgs
-    ) -> typing.Tuple[str, _DocT]:
+    ) -> tuple[str, _DocT]:
         """Return config yaml and dict of merged config"""
         if YAML is None:
             raise AnsibleActionFail(
@@ -452,7 +479,7 @@ class ActionModule(ActionBase):
         merged_resultant = self._patch(args, original_resultant)
 
         out = StringIO()
-        yaml.dump(merged_resultant, out)
+        yaml.dump(_strip_ansible_tags(merged_resultant), out)
         resultant = out.getvalue()
         if not args.strip_comments:
             # restore document start marker
@@ -470,7 +497,7 @@ class ActionModule(ActionBase):
 
     def return_config_overrides_toml(
         self, resultant: str, args: TaskArgs
-    ) -> typing.Tuple[str, _DocT]:
+    ) -> tuple[str, _DocT]:
         """Returns config toml and dict of merged config"""
         if tomlkit is None:
             raise AnsibleActionFail(
@@ -487,7 +514,7 @@ class ActionModule(ActionBase):
 
     def _patch(self, args: TaskArgs, base_items: _DocT) -> _DocT:
         if args._patcher is not None:
-            return args._patcher.apply(base_items, in_place=True)
+            return args._patcher.apply(base_items)
 
         return base_items
 
@@ -555,10 +582,6 @@ class ActionModule(ActionBase):
 
         args.dest = user_dest
 
-        # Default - nothing to do
-        # if args.config_overrides is None:
-        #     args.config_overrides = {}
-
         if isinstance(args.config_overrides, list):
             if JsonPatch is None:
                 raise AnsibleActionFail(
@@ -589,7 +612,14 @@ class ActionModule(ActionBase):
         try:
             with open(args.source, "rb") as f:
                 try:
-                    template_data = to_text(f.read(), errors="surrogate_or_strict")
+                    # Mark the template data as trusted so that ansible-core 2.20+
+                    # actually renders Jinja variables ({{ var }}).
+                    # Without this, the ansible-core templating engine's trust check
+                    # (< 2.19) treats externally-sourced template contents as
+                    # untrusted and returns them unrendered.
+                    template_data = trust_as_template(
+                        to_text(f.read(), errors="surrogate_or_strict")
+                    )
                 except UnicodeError as ex:
                     raise AnsibleActionFail(
                         "Template source files must be utf-8 encoded"
@@ -622,20 +652,12 @@ class ActionModule(ActionBase):
                     searchpath=args.searchpath,
                     available_variables=temp_vars,
                 )
-                if hasattr(templar, "template"):
-                    resultant = templar.template(
-                        template_data,
-                        preserve_trailing_newlines=True,
-                        escape_backslashes=False,
-                        overrides=template_overrides or None,
-                    )
-                else:
-                    resultant = templar.do_template(
-                        template_data,
-                        preserve_trailing_newlines=True,
-                        escape_backslashes=False,
-                        overrides=template_overrides or None,
-                    )
+                resultant = templar.template(
+                    template_data,
+                    preserve_trailing_newlines=True,
+                    escape_backslashes=False,
+                    overrides=template_overrides or None,
+                )
 
             else:
                 resultant = template_data
@@ -648,7 +670,7 @@ class ActionModule(ActionBase):
             if args._temp_src and os.path.exists(args._temp_src):
                 os.unlink(args._temp_src)
 
-        resultant, config_base = self.type_merger(resultant, args)
+        resultant, _config_base = self.type_merger(resultant, args)
 
         if args.strip_comments and args.config_type == "ini":
             lines = [
@@ -697,18 +719,6 @@ class ActionModule(ActionBase):
 
         finally:
             shutil.rmtree(to_bytes(local_tempdir, errors="surrogate_or_strict"))
-
-        # NOTE(vermakov): let's use copy diff
-        # if self._play_context.diff:
-        #     copy_diff = result.pop("diff", None)
-        #     if copy_diff:
-        #         result["diff"] = [copy_diff]
-        #     else:
-        #         result["diff"] = []
-
-        #     result["diff"].append(
-        #         {"prepared": json.dumps(mods, indent=4, sort_keys=True)}
-        #     )
 
         self._remove_tmp_path(self._connection._shell.tmpdir)
 

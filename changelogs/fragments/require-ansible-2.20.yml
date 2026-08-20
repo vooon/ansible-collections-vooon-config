@@ -1,0 +1,3 @@
+---
+breaking_changes:
+  - "The collection now requires ansible-core 2.20 or newer. The 2.19 templating engine changes make it impossible to keep supporting earlier versions while rendering `config_template` templates correctly."

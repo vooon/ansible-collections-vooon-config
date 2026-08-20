@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright: (c) 2024, Sardina Systems Ltd.
 # SPDX-License-Identifier: Apache-2.0
 
@@ -14,8 +13,8 @@ try:
 except ImportError:
     durationpy = None  # type: ignore[assignment]
 
-_StrOrList = typing.Union[str, typing.Iterable[str]]
-_FloatOrList = typing.Union[float, typing.Iterable[float]]
+_StrOrList = str | typing.Iterable[str]
+_FloatOrList = float | typing.Iterable[float]
 
 
 def dur2sec(dur: _StrOrList) -> _FloatOrList:
