@@ -109,3 +109,53 @@ releases:
     - systemd-tmpfiles-override-fixes.yml
     - systemd_sysusers-fixes.yml
     release_date: '2026-02-17'
+  3.2.0:
+    changes:
+      breaking_changes:
+      - The collection now requires ansible-core 2.20 or newer. The 2.19 templating
+        engine changes make it impossible to keep supporting earlier versions while
+        rendering `config_template` templates correctly.
+      bugfixes:
+      - config_template - mark template data as trusted via ``ansible.plugins.action.template.trust_as_template``
+        so Jinja variables (``{{ var }}``) are actually rendered on ansible-core 2.20+.
+        On 2.19+ the new templating engine refused to render untrusted template contents
+        and left variables unresolved.
+      - config_template - strip ansible-core data tags (``_AnsibleTagged*``) from
+        merged ``config_type=yaml`` values before dumping with ruamel.yaml, so tagged
+        ``str``/``int``/``bool`` overrides no longer fail with ``RepresenterError``
+        on ansible-core 2.20+.
+      - oncalendar filter - fix the `oncalendar` filter returning an empty stream
+        when `iter_max` is unset (or 0). The default (unbounded) mode now yields the
+        stream of next invocation dates as documented, instead of yielding nothing.
+      release_summary: 'This release modernizes the collection for ansible-core 2.20
+        and newer.
+
+
+        The ``config_template`` action plugin now properly renders Jinja variables
+        on
+
+        ansible-core 2.20+ (the newer templating engine requires template data to
+        be
+
+        marked as trusted) and handles ``config_type=yaml`` overrides that arrive
+        as
+
+        ansible-core data-tagged values. Pre-2.20 compatibility wrappers were dropped,
+
+        and the minimum supported ansible-core version was raised to 2.20.
+
+
+        Also included are a fix to the ``oncalendar`` filter (unbounded iteration
+        now
+
+        yields the documented stream of dates), removal of dead code, and cleanup
+        of
+
+        type annotations, formatting and plugin documentation.'
+    fragments:
+    - config_template-trust-as-template.yml
+    - config_template-yaml-tagged-overrides.yml
+    - oncalendar-infinite-parser.yml
+    - release-summary.yml
+    - require-ansible-2.20.yml
+    release_date: '2026-08-20'

@@ -1,3 +1,0 @@
----
-bugfixes:
-  - "config_template - strip ansible-core data tags (``_AnsibleTagged*``) from merged ``config_type=yaml`` values before dumping with ruamel.yaml, so tagged ``str``/``int``/``bool`` overrides no longer fail with ``RepresenterError`` on ansible-core 2.20+."
