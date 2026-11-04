@@ -51,10 +51,6 @@ options:
       - hjson
       - yaml
       - toml
-  content:
-    description:
-      - Template content to render instead of reading O(src).
-    type: str
   list_extend:
     description:
       - When true, a list in O(config_overrides) extends a list that already

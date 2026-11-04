@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - enabled test - a string input such as ``"yes"`` is evaluated as one boolean instead of being iterated character by character.

@@ -40,8 +40,8 @@ class TestModule:
         if isinstance(value, Undefined):
             value = [default]
 
-        # convert anything to list
-        if not isinstance(value, Iterable):
+        # convert anything to list; a string is a single value
+        if isinstance(value, str) or not isinstance(value, Iterable):
             value = [value]
 
         return all(boolean(v) for v in value)

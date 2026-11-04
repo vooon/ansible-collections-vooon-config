@@ -37,11 +37,14 @@ def test_enabled_undefined_uses_default():
     assert test.is_enabled(Undefined(name="missing"), default=False) is False
 
 
-def test_enabled_scalar_string_true_raises_type_error_with_current_behavior():
+@pytest.mark.parametrize(
+    "value, expected",
+    [("true", True), ("yes", True), ("on", True), ("false", False), ("no", False)],
+)
+def test_enabled_scalar_string(value, expected):
     test = m.TestModule()
 
-    with pytest.raises(TypeError):
-        test.is_enabled("true")
+    assert test.is_enabled(value) is expected
 
 
 def test_enabled_none_raises_type_error_with_current_behavior():

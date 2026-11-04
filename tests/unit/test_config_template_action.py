@@ -260,3 +260,34 @@ def test_ini_none_override(action, ignore_none_type, expected):
     rendered, _merged = action.return_config_overrides_ini(INI_PATCH_TEMPLATE, args)
 
     assert rendered == expected
+
+
+INI_PATCH_MULTILINE = """\
+[section]
+name = demo
+multi = a
+  b
+[other]
+z = 3
+"""
+
+
+def test_ini_json_patch_remove_and_keep_untouched(action):
+    from jsonpatch import JsonPatch
+
+    ops = [
+        {"op": "remove", "path": "/section/name"},
+        {"op": "remove", "path": "/other"},
+        {"op": "add", "path": "/section/new", "value": "1"},
+    ]
+    args = config_template.TaskArgs()
+    args.source = "test"
+    args.config_type = "ini"
+    args.config_overrides = ops
+    args._patcher = JsonPatch(ops)
+    args.ini_tidy = False
+
+    rendered, merged = action.return_config_overrides_ini(INI_PATCH_MULTILINE, args)
+
+    assert rendered == "[section]\nmulti = a\n  b\nnew = 1\n"
+    assert merged == {"section": {"multi": ["a", "b"], "new": "1"}}
