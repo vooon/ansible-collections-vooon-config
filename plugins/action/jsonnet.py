@@ -6,13 +6,10 @@
 
 import json
 import os
-import shutil
 import stat
-import tempfile
 import typing
 from io import StringIO
 
-from ansible import constants as C
 from ansible.config.manager import ensure_type
 from ansible.errors import (
     AnsibleAction,
@@ -24,6 +21,9 @@ from ansible.module_utils.common.text.converters import to_bytes, to_native, to_
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.template import generate_ansible_template_vars
+from ansible_collections.vooon.config.plugins.plugin_utils.copy_result import (
+    copy_rendered,
+)
 
 try:
     import _jsonnet
@@ -184,41 +184,18 @@ class ActionModule(ActionBase):
             for remove in ("output_encoding", "format", "include_dir"):
                 new_task.args.pop(remove, None)
 
-            local_tempdir = tempfile.mkdtemp(dir=C.DEFAULT_LOCAL_TMP)
-
-            try:
-                result_file = os.path.join(local_tempdir, os.path.basename(source))
-                with open(
-                    to_bytes(result_file, errors="surrogate_or_strict"), "wb"
-                ) as f:
-                    f.write(
-                        to_bytes(
-                            resultant,
-                            encoding=output_encoding,
-                            errors="surrogate_or_strict",
-                        )
-                    )
-
-                new_task.args.update(
-                    dict(
-                        src=result_file,
-                        dest=dest,
-                        follow=follow,
-                    ),
+            result.update(
+                copy_rendered(
+                    self,
+                    new_task,
+                    content=resultant,
+                    filename=source,
+                    dest=dest,
+                    task_vars=task_vars,
+                    follow=follow,
+                    encoding=output_encoding,
                 )
-                # call with ansible.legacy prefix to eliminate collisions with collections while still allowing local override
-                copy_action = self._shared_loader_obj.action_loader.get(
-                    "ansible.legacy.copy",
-                    task=new_task,
-                    connection=self._connection,
-                    play_context=self._play_context,
-                    loader=self._loader,
-                    templar=self._templar,
-                    shared_loader_obj=self._shared_loader_obj,
-                )
-                result.update(copy_action.run(task_vars=task_vars))
-            finally:
-                shutil.rmtree(to_bytes(local_tempdir, errors="surrogate_or_strict"))
+            )
 
         except AnsibleAction as e:
             result.update(e.result)

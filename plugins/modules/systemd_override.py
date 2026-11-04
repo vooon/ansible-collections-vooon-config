@@ -89,6 +89,10 @@ override_file:
 from pathlib import Path
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible_collections.vooon.config.plugins.module_utils.systemd_conf import (
+    conf_path,
+    manage_conf_file,
+)
 
 
 def run_module():
@@ -131,68 +135,20 @@ def run_module():
     if prefix is None:
         prefix = "/etc/containers/systemd" if unit_type == "quadlet" else "/etc/systemd"
 
-    if unit_type == "quadlet":
-        dirpath = Path(prefix) / (unit.endswith(".d") and unit or (unit + ".d"))
-    else:
-        dirpath = (
-            Path(prefix) / unit_type / (unit.endswith(".d") and unit or (unit + ".d"))
-        )
+    base = Path(prefix) if unit_type == "quadlet" else Path(prefix) / unit_type
+    filepath = conf_path(conf_path(base, unit, suffix=".d"), name)
 
-    filepath = dirpath / (name.endswith(".conf") and name or (name + ".conf"))
-
-    changed = False
-    diff = dict(
-        before_header="",
-        after_header="",
-        before="",
-        after="",
+    result = manage_conf_file(
+        module,
+        filepath,
+        state=state,
+        content=content,
+        directory_mode=dmode,
+        # if there are no overrides left, remove the directory
+        remove_empty_dir=True,
     )
 
-    if filepath.exists():
-        diff["before_header"] = str(filepath)
-        with filepath.open("r") as fd:
-            diff["before"] = fd.read()
-
-    if state == "present":
-        # create override directory if needed
-        if not dirpath.exists():
-            changed = True
-            if not module.check_mode:
-                dirpath.mkdir(parents=True)
-
-        if dirpath.exists():
-            changed = module.set_mode_if_different(dirpath, dmode, changed)
-
-        # write content to override file
-        diff["after_header"] = str(filepath)
-        diff["after"] = content
-        content_changed = (not filepath.exists()) or (diff["before"] != content)
-        if content_changed:
-            changed = True
-            if not module.check_mode:
-                with filepath.open("wb") as fd:
-                    fd.write(content.encode("utf-8"))
-
-        if filepath.exists():
-            file_args = module.load_file_common_arguments(
-                module.params, path=str(filepath)
-            )
-            changed = module.set_fs_attributes_if_different(file_args, changed)
-
-    elif state == "absent":
-        # remove override file
-        if filepath.exists():
-            changed = True
-            if not module.check_mode:
-                filepath.unlink()
-
-        # if there is no overrides left - remove directory
-        if dirpath.exists() and len(list(dirpath.iterdir())) == 0:
-            changed = True
-            if not module.check_mode:
-                dirpath.rmdir()
-
-    module.exit_json(changed=changed, diff=diff, override_file=str(filepath))
+    module.exit_json(override_file=str(filepath), **result)
 
 
 def main():

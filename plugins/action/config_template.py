@@ -29,7 +29,6 @@ import dataclasses
 import json
 import os
 import re
-import shutil
 import tempfile
 import types
 import typing
@@ -42,6 +41,9 @@ from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.plugins.action.template import trust_as_template
 from ansible.template import generate_ansible_template_vars
+from ansible_collections.vooon.config.plugins.plugin_utils.copy_result import (
+    copy_rendered,
+)
 
 try:
     from jsonpatch import JsonPatch
@@ -313,9 +315,9 @@ class SimpleMerger:
 
 @dataclasses.dataclass
 class TaskArgs:
-    source: str = None  # type: ignore # src or temp file
-    dest: str = None  # type: ignore # remote path, type: ignore
-    src: str = None  # type: ignore # local template file, type: ignore
+    source: str = ""  # resolved template path (src or temp file)
+    dest: str = ""  # remote path
+    src: str = ""  # local template file
     remote_src: bool = False  # use remote file as source
     content: typing.Any = None  # content, will be placed to temp file
     config_overrides: _DocT | None = None
@@ -333,15 +335,15 @@ class TaskArgs:
     yaml_indent_sequence: int = 4
     yaml_indent_offset: int = 2
     strip_comments: bool = False
-    block_start_string: str = None  # type: ignore
-    block_end_string: str = None  # type: ignore
-    variable_start_string: str = None  # type: ignore
-    variable_end_string: str = None  # type: ignore
-    comment_start_string: str = None  # type: ignore
-    comment_end_string: str = None  # type: ignore
+    block_start_string: str | None = None
+    block_end_string: str | None = None
+    variable_start_string: str | None = None
+    variable_end_string: str | None = None
+    comment_start_string: str | None = None
+    comment_end_string: str | None = None
     render_template: bool = True
-    state: str = None  # type: ignore # should not be set
-    _temp_src: None | str = None
+    state: str | None = None  # should not be set
+    _temp_src: str | None = None
     _patcher: typing.Any | None = None
 
     @classmethod
@@ -700,36 +702,16 @@ class ActionModule(ActionBase):
         for field in dataclasses.fields(args):
             new_task.args.pop(field.name, None)
 
-        local_tempdir = tempfile.mkdtemp(dir=C.DEFAULT_LOCAL_TMP)
-        try:
-            result_file = os.path.join(local_tempdir, os.path.basename(args.source))
-            with open(result_file, "wb") as f:
-                f.write(
-                    to_bytes(resultant, encoding="utf-8", errors="surrogate_or_strict")
-                )
-
-            new_task.args.update(
-                dict(
-                    src=result_file,
-                    dest=args.dest,
-                    follow=True,
-                )
+        result.update(
+            copy_rendered(
+                self,
+                new_task,
+                content=resultant,
+                filename=args.source,
+                dest=args.dest,
+                task_vars=task_vars,
             )
-
-            # call with ansible.legacy prefix to eliminate collisions with collections while still allowing local override
-            copy_action = self._shared_loader_obj.action_loader.get(
-                "ansible.legacy.copy",
-                task=new_task,
-                connection=self._connection,
-                play_context=self._play_context,
-                loader=self._loader,
-                templar=self._templar,
-                shared_loader_obj=self._shared_loader_obj,
-            )
-            result.update(copy_action.run(task_vars=task_vars))
-
-        finally:
-            shutil.rmtree(to_bytes(local_tempdir, errors="surrogate_or_strict"))
+        )
 
         self._remove_tmp_path(self._connection._shell.tmpdir)
 
