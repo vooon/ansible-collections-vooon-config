@@ -38,7 +38,6 @@ multiline =
 
 INI_EDITIED_OPTS = """\
 [DEFAULT]
-
 #
 # From nova.conf
 #

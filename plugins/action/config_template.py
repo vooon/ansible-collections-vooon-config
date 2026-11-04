@@ -116,7 +116,7 @@ if ini is not None:
             return self.indent + super().to_string()
 
         @classmethod
-        def parse(cls, line: str) -> typing.Optional["OptionLine"]:
+        def parse(cls, line: str) -> OptionLine | None:
             instance = super().parse(line)
             if instance is not None:
                 m = cls.indent_regex.match(line)
@@ -138,7 +138,7 @@ if ini is not None:
         @classmethod
         def from_string(
             cls, resultant: str, source: str = "<???>", **kwargs
-        ) -> "INIConfig":
+        ) -> INIConfig:
             if resultant.endswith("\n"):
                 resultant = resultant[0:-1]
 
@@ -199,7 +199,7 @@ if ini is not None:
         def as_dict(self) -> dict[str, dict]:
             def yield_section(
                 sect,
-            ) -> typing.Generator[tuple[str, typing.Any], None, None]:
+            ) -> typing.Generator[tuple[str, typing.Any]]:
                 for name in sect:
                     v = sect[name]
                     if isinstance(v, str) and "\n" in v:
@@ -214,7 +214,7 @@ if ini is not None:
             section: str,
             key: str,
             value: typing.Any,
-            args: typing.Optional["TaskArgs"] = None,
+            args: TaskArgs | None = None,
         ):
             if args is None:
                 args = TaskArgs()
@@ -337,7 +337,7 @@ class TaskArgs:
     _patcher: typing.Any | None = None
 
     @classmethod
-    def from_args(cls, task_args: dict) -> "TaskArgs":
+    def from_args(cls, task_args: dict) -> TaskArgs:
         def field_has_type(field_type: typing.Any, target_type: type) -> bool:
             if field_type is target_type:
                 return True
@@ -349,7 +349,7 @@ class TaskArgs:
                 )
             return False
 
-        def yield_args() -> typing.Generator[tuple[str, typing.Any], None, None]:
+        def yield_args() -> typing.Generator[tuple[str, typing.Any]]:
             for field in dataclasses.fields(cls):
                 if field.name not in task_args:
                     continue

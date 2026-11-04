@@ -1,0 +1,3 @@
+plugins/modules/systemd_override.py validate-modules:missing-gplv3-license
+plugins/modules/systemd_sysusers.py validate-modules:missing-gplv3-license
+plugins/modules/systemd_tmpfiles.py validate-modules:missing-gplv3-license
