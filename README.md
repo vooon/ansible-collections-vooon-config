@@ -31,6 +31,7 @@ ansible-test integration systemd_sysusers
 ansible-test integration systemd_tmpfiles
 ansible-test integration systemd_override
 ansible-test integration config_template
+ansible-test integration enabled
 ```
 
 `ansible-test` must be executed from a collection path like:

@@ -1,3 +1,4 @@
+---
 bugfixes:
   - config_template - JSON Patch overrides (a list in ``config_overrides``) are now applied to ``config_type=ini``; previously the patched result was discarded and the file was rendered unpatched.
   - config_template - implement the documented ``ignore_none_type`` option for INI files; ``null`` override values are skipped by default instead of being written as the literal ``None``, and written with an empty value when set to false.

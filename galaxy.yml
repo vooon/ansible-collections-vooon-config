@@ -28,3 +28,18 @@ build_ignore:
   - .pytest_cache
   - .ruff_cache
   - .cache
+  - .claude
+  - .github
+  - .gitignore
+  - .ansible-lint
+  - .yamllint
+  - .bumpversion.cfg
+  - AGENTS.md
+  - pyproject.toml
+  - uv.lock
+  - dist
+  - htmlcov
+  - coverage.xml
+  - tests/output
+  - changelogs/fragments
+  - changelogs/.plugin-cache.yaml

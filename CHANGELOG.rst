@@ -1,6 +1,6 @@
-===========================
-Fishos.Config Release Notes
-===========================
+==========================
+Vooon.Config Release Notes
+==========================
 
 .. contents:: Topics
 
