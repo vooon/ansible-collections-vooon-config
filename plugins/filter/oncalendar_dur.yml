@@ -13,7 +13,7 @@ DOCUMENTATION:
       type: raw
       default: null
     tz:
-      description: Timezone for calculation.
+      description: Timezone for calculation. A tzinfo object or an IANA name such as V(Europe/Berlin).
       type: raw
       default: UTC
     iter_max:

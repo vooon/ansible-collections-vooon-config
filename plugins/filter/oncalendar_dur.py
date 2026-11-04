@@ -3,8 +3,9 @@
 
 import datetime as dt
 import typing
+import zoneinfo
 
-from ansible.errors import AnsibleFilterTypeError
+from ansible.errors import AnsibleTypeError
 
 try:
     from oncalendar import OnCalendar
@@ -15,13 +16,17 @@ except ImportError:
 def oncalendar(
     spec: str,
     start_time: dt.datetime | str | None = None,
-    tz: dt.tzinfo = dt.UTC,
+    tz: dt.tzinfo | str = dt.UTC,
     iter_max: int = 0,
 ) -> typing.Iterable[dt.datetime]:
     """Parse systemd OnCalendar spec and return to stream of next invocation dates"""
 
     if OnCalendar is None:
-        raise AnsibleFilterTypeError("oncalendar python package is required")
+        raise AnsibleTypeError("oncalendar python package is required")
+
+    if isinstance(tz, str):
+        # Playbooks can only pass a string, e.g. "Europe/Berlin".
+        tz = zoneinfo.ZoneInfo(tz)
 
     if isinstance(start_time, str):
         start_time = dt.datetime.fromisoformat(start_time)
@@ -47,7 +52,7 @@ def oncalendar(
 def oncalendar_dur(
     spec: str,
     start_time: dt.datetime | str | None = None,
-    tz: dt.tzinfo = dt.UTC,
+    tz: dt.tzinfo | str = dt.UTC,
     iter_max: int = 0,
 ) -> typing.Iterable[float]:
     """Parse systemd OnCalendar spec and return time deltas between dates in seconds"""

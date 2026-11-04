@@ -34,6 +34,10 @@ def test_sec2dur_iterable_values():
     assert out == ["1m", "2m"]
 
 
+def test_sec2dur_int_value():
+    assert m.sec2dur(600) == "10m"
+
+
 def test_sec2dur_type_error():
     with pytest.raises(AnsibleFilterTypeError):
-        m.sec2dur(1)  # type: ignore[arg-type]
+        m.sec2dur(None)  # type: ignore[arg-type]
