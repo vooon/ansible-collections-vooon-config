@@ -1,0 +1,2 @@
+breaking_changes:
+  - The collection now requires Python 3.14 or newer on the controller (``requires-python = ">= 3.14"``).
