@@ -51,21 +51,58 @@ options:
       - hjson
       - yaml
       - toml
+  content:
+    description:
+      - Template content to render instead of reading O(src).
+    type: str
   list_extend:
     description:
-      - By default a list item in a JSON or YAML format will extend if
-        its already defined in the target template and a config_override
-        using a list is being set for the existing "key". This functionality
-        can be toggled on or off using this option. If disabled an override
-        list will replace an existing "key".
+      - When true, a list in O(config_overrides) extends a list that already
+        exists under the same key in the rendered JSON, YAML or TOML document.
+        When false an override list replaces the existing one.
     type: bool
+    default: false
   ignore_none_type:
     description:
-      - Can be true or false. If ignore_none_type is set to true, then
-        valueless INI options will not be written out to the resultant file.
-        If it's set to false, then config_template will write out only
-        the option name without the '=' or ':' suffix. The default is true.
+      - Only for O(config_type=ini). When true, override options whose value
+        is V(null) are not written to the resultant file. When false they are
+        written with an empty value.
     type: bool
+    default: true
+  ini_list_sep:
+    description:
+      - Separator used to join a list override into a single INI option value.
+    type: str
+    default: ','
+  ini_tidy:
+    description:
+      - Collapse repeated blank lines in the resultant INI file.
+    type: bool
+    default: true
+  yml_multilines:
+    description:
+      - Keep multi-line string overrides as a single value instead of
+        splitting them into a list on newlines.
+    type: bool
+    default: false
+  block_start_string:
+    description: Jinja2 block start marker override for rendering O(src).
+    type: str
+  block_end_string:
+    description: Jinja2 block end marker override for rendering O(src).
+    type: str
+  variable_start_string:
+    description: Jinja2 variable start marker override for rendering O(src).
+    type: str
+  variable_end_string:
+    description: Jinja2 variable end marker override for rendering O(src).
+    type: str
+  comment_start_string:
+    description: Jinja2 comment start marker override for rendering O(src).
+    type: str
+  comment_end_string:
+    description: Jinja2 comment end marker override for rendering O(src).
+    type: str
   default_section:
     description:
       - Specify the default section for INI configuration files. This is the
@@ -102,7 +139,7 @@ options:
     description:
       - Sort dict keys in JSON result
     type: bool
-    default: false
+    default: true
   yaml_indent_mapping:
     description:
       - YAML mapping indent
@@ -128,7 +165,7 @@ EXAMPLES = """
     src: templates/test.ini.j2
     dest: /tmp/test.ini
     config_overrides: {}
-    top_ini_section: 'global'
+    default_section: 'global'
     config_type: ini
 
 - name: run config template json

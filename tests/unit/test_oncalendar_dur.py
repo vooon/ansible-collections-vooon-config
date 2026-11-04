@@ -37,3 +37,10 @@ def test_oncalendar_dur():
 
     assert 43200.0 == min(durs)
     assert 216000.0 == max(durs)
+
+
+def test_oncalendar_tz_string():
+    dates = list(m.oncalendar(SPEC, tz="Europe/Berlin", iter_max=2))
+
+    assert 2 == len(dates)
+    assert all(str(d.tzinfo) == "Europe/Berlin" for d in dates)

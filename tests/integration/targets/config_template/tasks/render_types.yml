@@ -206,4 +206,33 @@
         that:
           - (tpl_open not in (ini_file.content | b64decode | string))
           - ('name = overridden' in (ini_file.content | b64decode | string))
+
+    - name: Render INI config using JSON Patch operations
+      vooon.config.config_template:
+        src: render.ini.j2
+        dest: "{{ render_dir }}/config-patch.ini"
+        config_type: ini
+        config_overrides:
+          - op: replace
+            path: /section/port
+            value: "9090"
+          - op: add
+            path: /section/patched
+            value: "yes"
+      vars:
+        name: demo
+        port: 8080
+      register: ini_patch
+
+    - name: Read JSON Patched INI
+      ansible.builtin.slurp:
+        src: "{{ render_dir }}/config-patch.ini"
+      register: ini_patch_file
+
+    - name: Assert INI JSON Patch applied
+      ansible.builtin.assert:
+        that:
+          - ini_patch.changed
+          - ('port = 9090' in (ini_patch_file.content | b64decode | string))
+          - ('patched = yes' in (ini_patch_file.content | b64decode | string))
           - ('port = 8080' in (ini_file.content | b64decode | string))

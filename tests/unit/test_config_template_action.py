@@ -217,3 +217,46 @@ def test_strip_ansible_tags_preserves_ruamel_roundtrip_nodes():
     # Same object mutated in place (comments preserved), scalar left untouched.
     assert out is node
     assert out["port"].__class__ is int
+
+
+INI_PATCH_TEMPLATE = """\
+[section]
+name = demo
+port = 8080
+"""
+
+
+def test_ini_json_patch_is_applied(action):
+    from jsonpatch import JsonPatch
+
+    ops = [
+        {"op": "replace", "path": "/section/port", "value": "9090"},
+        {"op": "add", "path": "/section/patched", "value": "yes"},
+    ]
+    args = config_template.TaskArgs()
+    args.source = "test"
+    args.config_type = "ini"
+    args.config_overrides = ops
+    args._patcher = JsonPatch(ops)
+
+    rendered, merged = action.return_config_overrides_ini(INI_PATCH_TEMPLATE, args)
+
+    assert "port = 9090" in rendered
+    assert "patched = yes" in rendered
+    assert merged["section"]["port"] == "9090"
+
+
+@pytest.mark.parametrize(
+    "ignore_none_type, expected",
+    [
+        (True, "[section]\nname = demo\nport = 8080\n"),
+        (False, "[section]\nname = demo\nport = 8080\nempty = \n"),
+    ],
+)
+def test_ini_none_override(action, ignore_none_type, expected):
+    args = _args({"section": {"empty": None}}, "ini")
+    args.ignore_none_type = ignore_none_type
+
+    rendered, _merged = action.return_config_overrides_ini(INI_PATCH_TEMPLATE, args)
+
+    assert rendered == expected

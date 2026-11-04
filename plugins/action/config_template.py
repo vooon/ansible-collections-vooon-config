@@ -222,6 +222,11 @@ if ini is not None:
             if args is None:
                 args = TaskArgs()
 
+            if value is None:
+                if args.ignore_none_type:
+                    return
+                value = ""
+
             if isinstance(value, list):
                 value = args.ini_list_sep.join(to_text(item) for item in value)
             elif isinstance(value, dict):
@@ -317,7 +322,7 @@ class TaskArgs:
     config_type: str = "ini"
     searchpath: list = dataclasses.field(default_factory=list)
     list_extend: bool = False
-    ignore_none_type: bool = False
+    ignore_none_type: bool = True
     default_section: str = "DEFAULT"
     ini_list_sep: str = ","
     ini_tidy: bool = True
@@ -418,8 +423,7 @@ class ActionModule(ActionBase):
                         config.set_option(section, key, value, args)
 
         elif JsonPatch is not None and isinstance(args._patcher, JsonPatch):
-            base_items = config.as_dict()
-            args._patcher.apply(base_items)
+            base_items = args._patcher.apply(config.as_dict())
             for section, items in base_items.items():
                 for key, value in items.items():
                     config.set_option(section, key, value, args)

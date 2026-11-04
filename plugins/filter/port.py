@@ -4,7 +4,7 @@
 
 from collections.abc import Iterable
 
-from ansible.errors import AnsibleFilterError, AnsibleFilterTypeError
+from ansible.errors import AnsibleFilterError, AnsibleTypeError
 from ansible.utils.display import Display
 from jinja2.exceptions import UndefinedError
 from jinja2.filters import pass_context
@@ -16,7 +16,7 @@ display = Display()
 def port(context, key):
     """Find port for service.name"""
     if not isinstance(key, str):
-        raise AnsibleFilterTypeError(f"key should be string, got: {key!r}")
+        raise AnsibleTypeError(f"key should be string, got: {key!r}")
 
     def getport(varname):
         m = context.resolve(varname)
@@ -57,7 +57,7 @@ def port(context, key):
 @pass_context
 def add_port(context, ip_or_hosts, key):
     if not isinstance(ip_or_hosts, (str, Iterable)):
-        raise AnsibleFilterTypeError(
+        raise AnsibleTypeError(
             f"ip_or_hosts should be string or list, got: {ip_or_hosts!r}"
         )
 

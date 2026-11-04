@@ -94,7 +94,6 @@ from ansible.module_utils.basic import AnsibleModule
 def run_module():
     required_if = [
         ("state", "present", ["content"]),
-        ("state", "absent", []),
     ]
     module_args = dict(
         name=dict(type="str", required=True),
@@ -126,7 +125,6 @@ def run_module():
     state = module.params["state"]
     content = module.params["content"]
     dmode = module.params["directory_mode"]
-    fmode = module.params["mode"]
     prefix = module.params["prefix"]
     unit_type = module.params["unit_type"]
 
@@ -176,7 +174,10 @@ def run_module():
                     fd.write(content.encode("utf-8"))
 
         if filepath.exists():
-            changed = module.set_mode_if_different(filepath, fmode, changed)
+            file_args = module.load_file_common_arguments(
+                module.params, path=str(filepath)
+            )
+            changed = module.set_fs_attributes_if_different(file_args, changed)
 
     elif state == "absent":
         # remove override file

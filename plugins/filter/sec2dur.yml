@@ -5,7 +5,7 @@ DOCUMENTATION:
   description: Convert float seconds into Golang Duration string
   options:
     _input:
-      description: Seconds. Accept single float or list of floats.
+      description: Seconds. Accept a single number (int or float) or a list of them.
       type: raw
       required: true
 
