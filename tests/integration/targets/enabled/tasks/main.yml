@@ -1,0 +1,60 @@
+---
+- name: Prepare test data
+  ansible.builtin.set_fact:
+    svc_on: {when: true}
+    svc_off: {when: false}
+    svc_list: {when: [true, "yes"]}
+    svc_list_off: {when: [true, "no"]}
+    svc_empty: {}
+
+- name: Defined true is enabled
+  ansible.builtin.assert:
+    that:
+      - svc_on.when is vooon.config.enabled
+      - svc_list.when is vooon.config.enabled
+      - svc_off.when is not vooon.config.enabled
+      - svc_list_off.when is not vooon.config.enabled
+
+- name: Undefined attribute defaults to enabled
+  ansible.builtin.assert:
+    that:
+      - svc_empty.when is vooon.config.enabled
+      - svc_empty.when is not vooon.config.enabled(false)
+      - svc_empty.when is not vooon.config.enabled(default=false)
+
+- name: Undefined variable defaults to enabled
+  ansible.builtin.assert:
+    that:
+      - enabled_test_no_such_var is vooon.config.enabled
+      - enabled_test_no_such_var is not vooon.config.enabled(false)
+
+- name: Undefined works in when
+  ansible.builtin.set_fact:
+    enabled_when_ran: true
+  when: svc_empty.when is vooon.config.enabled
+
+- name: Undefined with default=false skips the task
+  ansible.builtin.set_fact:
+    enabled_when_skipped: false
+  when: svc_empty.when is vooon.config.enabled(false)
+
+- name: Check when results
+  ansible.builtin.assert:
+    that:
+      - enabled_when_ran is true
+      - enabled_when_skipped is undefined
+
+- name: Errors inside the expression still fail
+  block:
+    - name: Error inside the tested expression
+      ansible.builtin.debug:
+        msg: must not run
+      when: ('not json' | from_json) is vooon.config.enabled
+    - name: Fail if the previous task did not error
+      ansible.builtin.fail:
+        msg: expected the when expression to fail
+  rescue:
+    - name: Confirm the expression error propagated
+      ansible.builtin.assert:
+        that:
+          - "'from_json' in ansible_failed_result.msg"
