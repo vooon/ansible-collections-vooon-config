@@ -1,3 +1,0 @@
----
-bugfixes:
-  - systemd_override - check mode now also reports the removal of an override directory that would become empty with ``state=absent``.

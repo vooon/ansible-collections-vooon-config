@@ -1,9 +1,0 @@
----
-bugfixes:
-  - config_template - JSON Patch overrides (a list in ``config_overrides``) are now applied to ``config_type=ini``; previously the patched result was discarded and the file was rendered unpatched. ``remove`` operations are honoured and untouched options keep their formatting.
-  - config_template - implement the documented ``ignore_none_type`` option for INI files; ``null`` override values are skipped by default instead of being written as the literal ``None``, and written with an empty value when set to false.
-  - config_template - documentation now reflects the actual defaults of ``list_extend`` (false) and ``json_sort_keys`` (true), documents ``content``, ``ini_list_sep``, ``ini_tidy``, ``yml_multilines`` and the Jinja2 delimiter overrides, and the example uses ``default_section`` instead of the non-existent ``top_ini_section``.
-  - sec2dur - accept integer seconds, e.g. ``600|sec2dur``, instead of failing with a type error.
-  - oncalendar, oncalendar_dur - ``tz`` accepts an IANA timezone name string such as ``Europe/Berlin``, which is the only form a playbook can pass.
-  - systemd_override, systemd_sysusers, systemd_tmpfiles - apply all file attributes (``owner``, ``group``, SELinux context, ``attributes``) to the managed file, not only ``mode``.
-  - filters - stop importing ``AnsibleFilterTypeError``, which ansible-core deprecates and removes in 2.23.

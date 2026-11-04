@@ -1,3 +1,0 @@
----
-minor_changes:
-  - The built collection tarball no longer ships development-only files (``uv.lock``, ``pyproject.toml``, CI configuration, changelog fragments).

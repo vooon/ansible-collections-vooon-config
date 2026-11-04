@@ -159,3 +159,55 @@ releases:
     - release-summary.yml
     - require-ansible-2.20.yml
     release_date: '2026-08-20'
+  3.3.0:
+    changes:
+      breaking_changes:
+      - The collection now requires Python 3.14 or newer on the controller (``requires-python
+        = ">= 3.14"``).
+      bugfixes:
+      - config_template - JSON Patch overrides (a list in ``config_overrides``) are
+        now applied to ``config_type=ini``; previously the patched result was discarded
+        and the file was rendered unpatched. ``remove`` operations are honoured and
+        untouched options keep their formatting.
+      - config_template - documentation now reflects the actual defaults of ``list_extend``
+        (false) and ``json_sort_keys`` (true), documents ``content``, ``ini_list_sep``,
+        ``ini_tidy``, ``yml_multilines`` and the Jinja2 delimiter overrides, and the
+        example uses ``default_section`` instead of the non-existent ``top_ini_section``.
+      - config_template - implement the documented ``ignore_none_type`` option for
+        INI files; ``null`` override values are skipped by default instead of being
+        written as the literal ``None``, and written with an empty value when set
+        to false.
+      - enabled test - a string input such as ``"yes"`` is evaluated as one boolean
+        instead of being iterated character by character.
+      - enabled test - undefined input is handled again on ansible-core 2.19 and newer;
+        the new templating engine skipped the test and failed the ``when`` with an
+        undefined error, so ``default`` was never applied. Other deferred errors inside
+        the tested expression still fail the task.
+      - filters - stop importing ``AnsibleFilterTypeError``, which ansible-core deprecates
+        and removes in 2.23.
+      - oncalendar, oncalendar_dur - ``tz`` accepts an IANA timezone name string such
+        as ``Europe/Berlin``, which is the only form a playbook can pass.
+      - sec2dur - accept integer seconds, e.g. ``600|sec2dur``, instead of failing
+        with a type error.
+      - systemd_override - check mode now also reports the removal of an override
+        directory that would become empty with ``state=absent``.
+      - systemd_override, systemd_sysusers, systemd_tmpfiles - apply all file attributes
+        (``owner``, ``group``, SELinux context, ``attributes``) to the managed file,
+        not only ``mode``.
+      minor_changes:
+      - The built collection tarball no longer ships development-only files (``uv.lock``,
+        ``pyproject.toml``, CI configuration, changelog fragments).
+      - config_template - require iniparse >= 0.5.3 from PyPI instead of a git checkout;
+        ``tidy`` now also collapses blank lines in the first INI section (https://github.com/candlepin/python-iniparse/commit/9506595).
+      release_summary: Update to ansible-core 2.22 and Python 3.14, with bugfixes
+        from a project-wide review.
+    fragments:
+    - build-ignore.yml
+    - config-template-fixes.yml
+    - enabled-string-input.yml
+    - enabled-undefined.yml
+    - iniparse-0.5.3.yml
+    - python-3.14.yml
+    - release-summary.yml
+    - systemd-shared-helper.yml
+    release_date: '2026-11-04'
