@@ -1,2 +1,2 @@
 ---
-release_summary: Update to ansible-core 2.22, require Python 3.14+, switch iniparse to the PyPI 0.5.3 release.
+release_summary: Update to ansible-core 2.22 and Python 3.14, with bugfixes from a project-wide review.

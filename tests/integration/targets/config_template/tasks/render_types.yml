@@ -206,6 +206,7 @@
         that:
           - (tpl_open not in (ini_file.content | b64decode | string))
           - ('name = overridden' in (ini_file.content | b64decode | string))
+          - ('port = 8080' in (ini_file.content | b64decode | string))
 
     - name: Render INI config using JSON Patch operations
       vooon.config.config_template:
@@ -219,6 +220,8 @@
           - op: add
             path: /section/patched
             value: "yes"
+          - op: remove
+            path: /section/name
       vars:
         name: demo
         port: 8080
@@ -235,4 +238,4 @@
           - ini_patch.changed
           - ('port = 9090' in (ini_patch_file.content | b64decode | string))
           - ('patched = yes' in (ini_patch_file.content | b64decode | string))
-          - ('port = 8080' in (ini_file.content | b64decode | string))
+          - ('name = demo' not in (ini_patch_file.content | b64decode | string))

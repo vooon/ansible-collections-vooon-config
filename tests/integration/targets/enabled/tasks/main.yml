@@ -14,6 +14,8 @@
       - svc_list.when is vooon.config.enabled
       - svc_off.when is not vooon.config.enabled
       - svc_list_off.when is not vooon.config.enabled
+      - "'yes' is vooon.config.enabled"
+      - "'no' is not vooon.config.enabled"
 
 - name: Undefined attribute defaults to enabled
   ansible.builtin.assert:

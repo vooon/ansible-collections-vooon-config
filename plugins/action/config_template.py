@@ -71,6 +71,7 @@ except ImportError:
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 
 _DocT = dict | list
+_MISSING = object()
 
 
 def _strip_ansible_tags(value: typing.Any) -> typing.Any:
@@ -425,10 +426,24 @@ class ActionModule(ActionBase):
                         config.set_option(section, key, value, args)
 
         elif JsonPatch is not None and isinstance(args._patcher, JsonPatch):
-            base_items = args._patcher.apply(config.as_dict())
-            for section, items in base_items.items():
+            original = config.as_dict()
+            patched = args._patcher.apply(original)
+
+            # Apply the result as a diff: drop what the patch removed and only
+            # re-set changed values, so untouched (e.g. multi-line) options
+            # keep their original formatting.
+            for section in list(config):
+                if section not in patched:
+                    del config[section]
+                    continue
+                for key in list(config[section]):
+                    if key not in patched[section]:
+                        del config[section][key]
+
+            for section, items in patched.items():
                 for key, value in items.items():
-                    config.set_option(section, key, value, args)
+                    if original.get(section, {}).get(key, _MISSING) != value:
+                        config.set_option(section, key, value, args)
 
         if args.ini_tidy:
             config.tidy()
