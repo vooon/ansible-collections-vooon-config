@@ -22,6 +22,8 @@
 # 2. Changed Diff back to unified file diff
 # 3. Changed to use iniparser instead of usage of outdated RawConfigParser
 
+from __future__ import annotations
+
 import base64
 import dataclasses
 import json
@@ -29,6 +31,7 @@ import os
 import re
 import shutil
 import tempfile
+import types
 import typing
 from io import StringIO
 
@@ -116,7 +119,7 @@ if ini is not None:
             return self.indent + super().to_string()
 
         @classmethod
-        def parse(cls, line: str) -> typing.Optional["OptionLine"]:
+        def parse(cls, line: str) -> OptionLine | None:
             instance = super().parse(line)
             if instance is not None:
                 m = cls.indent_regex.match(line)
@@ -138,7 +141,7 @@ if ini is not None:
         @classmethod
         def from_string(
             cls, resultant: str, source: str = "<???>", **kwargs
-        ) -> "INIConfig":
+        ) -> INIConfig:
             if resultant.endswith("\n"):
                 resultant = resultant[0:-1]
 
@@ -199,7 +202,7 @@ if ini is not None:
         def as_dict(self) -> dict[str, dict]:
             def yield_section(
                 sect,
-            ) -> typing.Generator[tuple[str, typing.Any], None, None]:
+            ) -> typing.Generator[tuple[str, typing.Any]]:
                 for name in sect:
                     v = sect[name]
                     if isinstance(v, str) and "\n" in v:
@@ -214,7 +217,7 @@ if ini is not None:
             section: str,
             key: str,
             value: typing.Any,
-            args: typing.Optional["TaskArgs"] = None,
+            args: TaskArgs | None = None,
         ):
             if args is None:
                 args = TaskArgs()
@@ -337,30 +340,34 @@ class TaskArgs:
     _patcher: typing.Any | None = None
 
     @classmethod
-    def from_args(cls, task_args: dict) -> "TaskArgs":
+    def from_args(cls, task_args: dict) -> TaskArgs:
+        # Annotations are strings (PEP 563), resolve them to real types.
+        hints = typing.get_type_hints(cls)
+
         def field_has_type(field_type: typing.Any, target_type: type) -> bool:
             if field_type is target_type:
                 return True
             origin = typing.get_origin(field_type)
-            if origin is typing.Union:
+            if origin is typing.Union or origin is types.UnionType:
                 return any(
                     field_has_type(arg, target_type)
                     for arg in typing.get_args(field_type)
                 )
             return False
 
-        def yield_args() -> typing.Generator[tuple[str, typing.Any], None, None]:
+        def yield_args() -> typing.Generator[tuple[str, typing.Any]]:
             for field in dataclasses.fields(cls):
                 if field.name not in task_args:
                     continue
                 v = task_args[field.name]
+                field_type = hints[field.name]
                 if v is None:
                     yield field.name, None
-                elif field_has_type(field.type, bool):
+                elif field_has_type(field_type, bool):
                     yield field.name, boolean(v, strict=False)
-                elif field_has_type(field.type, str):
+                elif field_has_type(field_type, str):
                     yield field.name, ensure_type(v, "string")
-                elif field_has_type(field.type, int):
+                elif field_has_type(field_type, int):
                     yield field.name, ensure_type(v, "integer")
                 else:
                     yield field.name, v
