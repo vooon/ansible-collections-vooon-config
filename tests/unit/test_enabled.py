@@ -49,3 +49,30 @@ def test_enabled_none_raises_type_error_with_current_behavior():
 
     with pytest.raises(TypeError):
         test.is_enabled(None)
+
+
+def test_enabled_undefined_marker_uses_default():
+    from ansible._internal._templating._jinja_common import UndefinedMarker
+
+    test = m.TestModule()
+    marker = UndefinedMarker(name="missing", _no_template_source=True)
+
+    assert test.is_enabled(marker) is True
+    assert test.is_enabled(marker, default=False) is False
+
+
+def test_enabled_other_marker_is_tripped():
+    from ansible._internal._templating._jinja_common import Marker, MarkerError
+
+    test = m.TestModule()
+    # A non-undefined marker (e.g. a captured exception) must be re-raised.
+    marker = Marker(hint="boom", _no_template_source=True)
+
+    with pytest.raises(MarkerError):
+        test.is_enabled(marker)
+
+
+def test_enabled_accepts_args_markers():
+    test = m.TestModule()
+
+    assert getattr(test.tests()["enabled"], "accept_args_markers", False) is True
