@@ -41,6 +41,9 @@ jobs:
       - name: Mypy
         run: uv run mypy --ignore-missing-imports --follow-imports skip -p plugins
 
+      - name: Ansible lint
+        run: uv run ansible-lint --offline --nocolor
+
       - name: Unit tests with coverage
         run: >-
           uv run pytest -q --cov=plugins
@@ -92,3 +95,41 @@ jobs:
             --exclude "dist" \
             "${GITHUB_WORKSPACE}/" "${coll_path}/"
           uv run bash -lc "cd '${coll_path}' && ansible-test sanity --python 3.14"
+
+  ansible-integration:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen --all-groups
+
+      # Only the targets that do not need root; the systemd_* targets write to /etc.
+      - name: Run ansible-test integration
+        shell: bash
+        run: |
+          set -euxo pipefail
+          coll_path="${RUNNER_TEMP}/ansible_collections/vooon/config"
+          mkdir -p "$(dirname "${coll_path}")"
+          rsync -a --delete \
+            --exclude ".git" \
+            --exclude ".venv" \
+            --exclude ".mypy_cache" \
+            --exclude ".pytest_cache" \
+            --exclude ".ruff_cache" \
+            --exclude ".cache" \
+            --exclude "tests/output" \
+            --exclude "dist" \
+            "${GITHUB_WORKSPACE}/" "${coll_path}/"
+          uv run bash -lc "cd '${coll_path}' && ansible-test integration config_template enabled --python 3.14 --local"

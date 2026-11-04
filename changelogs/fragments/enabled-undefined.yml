@@ -1,2 +1,3 @@
+---
 bugfixes:
   - enabled test - undefined input is handled again on ansible-core 2.19 and newer; the new templating engine skipped the test and failed the ``when`` with an undefined error, so ``default`` was never applied. Other deferred errors inside the tested expression still fail the task.

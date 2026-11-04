@@ -33,7 +33,7 @@ sections:
   - Bugfixes
 - - known_issues
   - Known Issues
-title: Fishos.Config
+title: Vooon.Config
 trivial_section_name: trivial
 use_fqcn: true
 vcs: auto

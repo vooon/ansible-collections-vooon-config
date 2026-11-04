@@ -30,8 +30,6 @@ dependencies = [
     "jsonnet > 0.20.0", # note: 0.20.0 failed to build with Python 3.13
 ]
 
-[project.optional-dependencies]
-
 [dependency-groups]
 dev = [
     "ansible-core >= 2.20.0",

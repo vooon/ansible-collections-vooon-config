@@ -69,3 +69,11 @@ openstack-ansible-ops
 previous
 changelogs/.plugin-cache.yaml
 ansible-lint.xml
+.venv/
+.cache/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+tests/output/
+htmlcov/
+coverage.xml
